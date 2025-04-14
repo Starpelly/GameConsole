@@ -58,7 +58,7 @@ void Drawing::Present()
 
 void Drawing::ClearScreen()
 {
-    uint16 color = 0xF800;
+    uint16 color = 0x8888;
     auto* frameBuffer = Engine.frameBuffer;
     int cnt = SCREEN_XSIZE * SCREEN_YSIZE;
     while (cnt--)
