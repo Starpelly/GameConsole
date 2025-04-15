@@ -16,6 +16,7 @@ bool SoulcastEngine::Init()
 	SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
 
 	uint8 flags = 0;
+
 #if SOULCAST_USING_OPENGL
 	flags |= SDL_WINDOW_OPENGL;
 
@@ -29,6 +30,8 @@ bool SoulcastEngine::Init()
 	SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
 	SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
 #endif
+
+	flags |= SDL_WINDOW_RESIZABLE;
 
 	Engine.window = SDL_CreateWindow("Soulcast", SCREEN_XSIZE * Engine.windowScale, SCREEN_YSIZE * Engine.windowScale, SDL_WINDOW_HIGH_PIXEL_DENSITY | flags);
 
@@ -82,6 +85,7 @@ bool SoulcastEngine::Init()
 	Engine.frameBuffer = new uint16[SCREEN_XSIZE * SCREEN_YSIZE];
 	memset(Engine.frameBuffer, 0, (SCREEN_XSIZE * SCREEN_YSIZE) * sizeof(uint16));
 
+	Input::Init();
 	Drawing::Init();
 }
 
@@ -90,6 +94,9 @@ void SoulcastEngine::Run()
 	uint64 targetFreq = SDL_GetPerformanceFrequency() / Engine.refreshRate;
 	uint64 curTicks = 0;
 	uint64 prevTicks = 0;
+
+	int32 x = 0;
+	int32 y = 0;
 
 	while (running)
 	{
@@ -105,8 +112,29 @@ void SoulcastEngine::Run()
 
 		for (int s = 0; s < gameSpeed; ++s)
 		{
+			Input::Process();
+
+			if (Input::CheckButtonDown(INPUT_LEFT))
+			{
+				x -= 1;
+			}
+			if (Input::CheckButtonDown(INPUT_RIGHT))
+			{
+				x += 1;
+			}
+			if (Input::CheckButtonDown(INPUT_UP))
+			{
+				y -= 1;
+			}
+			if (Input::CheckButtonDown(INPUT_DOWN))
+			{
+				y += 1;
+			}
+
 			Drawing::ClearScreen();
-			Drawing::DrawRectangle(4, 4, 16, 16);
+			Drawing::DrawRectangle(4, 4, 16, 16, Color());
+
+			Drawing::DrawLine(x, y, 64, 64);
 		}
 
 #if SOULCAST_USING_OPENGL && SOULCAST_USING_SDL3
@@ -119,6 +147,7 @@ void SoulcastEngine::Run()
 
 void SoulcastEngine::Shutdown()
 {
+	Input::Release();
 	Drawing::Shutdown();
 
 #if SOULCAST_USING_SDL3
@@ -137,8 +166,14 @@ bool SoulcastEngine::ProcessEvents()
 	{
 		switch (event.type)
 		{
+		case SDL_EVENT_TERMINATING:
+			return false;
 		case SDL_EVENT_QUIT:
 			return false;
+
+		case SDL_EVENT_KEY_DOWN:
+
+			break;
 		}
 	}
 #endif

@@ -1,13 +1,18 @@
 #pragma once
 
 #define SOULCAST_USING_SDL3 (true)
+#define SOULCAST_INPUTDEVICE_SDL3 (true)
 
+// =============
 // Standard Libs
+// =============
 #include <stdio.h>
 #include <string.h>
 #include <cmath>
 
+// ==============
 // Standard Types
+// ==============
 #include <cstdint>
 
 using int8 = std::int8_t;
@@ -22,7 +27,17 @@ using uint64 = std::uint64_t;
 using float32 = float;
 using float64 = double;
 
+struct Color
+{
+	uint8 r;
+	uint8 g;
+	uint8 b;
+	uint8 a;
+};
+
+// =========
 // Platforms
+// =========
 #define SOULCAST_WIN	(0)
 #define SOULCAST_LINUX	(1)
 
@@ -32,7 +47,13 @@ using float64 = double;
 	#define SOULCAST_PLATFORM (SOULCAST_LINUX)
 #endif
 
+// ======================
+// Render device backends
+// ======================
+
+// ===============
 // General Defines
+// ===============
 #define SCREEN_XSIZE	(320)
 #define SCREEN_YSIZE	(180)
 
@@ -47,6 +68,7 @@ using float64 = double;
 // ===============
 
 #include "Engine/Graphics/Drawing.hpp"
+#include "Engine/Input/Input.hpp"
 
 namespace Soulcast
 {

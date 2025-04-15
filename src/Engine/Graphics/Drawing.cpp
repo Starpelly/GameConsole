@@ -13,16 +13,16 @@ struct ScreenInfo
     int32 clipBound_Y2;
 };
 
-ScreenInfo m_CurrentScreen;
+ScreenInfo currentScreen;
 
 void Drawing::Init()
 {
-    m_CurrentScreen.pitch = SCREEN_XSIZE;
+    currentScreen.pitch = SCREEN_XSIZE;
 
-    m_CurrentScreen.clipBound_X1 = 0;
-    m_CurrentScreen.clipBound_X2 = SCREEN_XSIZE;
-    m_CurrentScreen.clipBound_Y1 = 0;
-    m_CurrentScreen.clipBound_Y2 = SCREEN_YSIZE;
+    currentScreen.clipBound_X1 = 0;
+    currentScreen.clipBound_X2 = SCREEN_XSIZE;
+    currentScreen.clipBound_Y1 = 0;
+    currentScreen.clipBound_Y2 = SCREEN_YSIZE;
 }
 
 void Drawing::Shutdown()
@@ -68,37 +68,37 @@ void Drawing::ClearScreen()
     }
 }
 
-void Drawing::DrawRectangle(int32 x, int32 y, int32 width, int32 height)
+void Drawing::DrawRectangle(int32 x, int32 y, int32 width, int32 height, const Color& color)
 {
-    uint16 color = 0xFFFF;
+    uint16 color16 = 0xFFFF;
 
-    if (width + x > m_CurrentScreen.clipBound_X2)
+    if (width + x > currentScreen.clipBound_X2)
     {
-        width = m_CurrentScreen.clipBound_X2 - x;
+        width = currentScreen.clipBound_X2 - x;
     }
 
-    if (x < m_CurrentScreen.clipBound_X1)
+    if (x < currentScreen.clipBound_X1)
     {
-        width += x - m_CurrentScreen.clipBound_X1;
-        x = m_CurrentScreen.clipBound_X1;
+        width += x - currentScreen.clipBound_X1;
+        x = currentScreen.clipBound_X1;
     }
 
-    if (height + y > m_CurrentScreen.clipBound_Y2)
+    if (height + y > currentScreen.clipBound_Y2)
     {
-        height = m_CurrentScreen.clipBound_Y2 - y;
+        height = currentScreen.clipBound_Y2 - y;
     }
 
-    if (y < m_CurrentScreen.clipBound_Y1)
+    if (y < currentScreen.clipBound_Y1)
     {
-        height += y - m_CurrentScreen.clipBound_Y1;
-        y = m_CurrentScreen.clipBound_Y1;
+        height += y - currentScreen.clipBound_Y1;
+        y = currentScreen.clipBound_Y1;
     }
 
     if (width <= 0 || height <= 0)
         return;
 
-    int32 pitch = m_CurrentScreen.pitch - width;
-    uint16* frameBuffer = &Engine.frameBuffer[x + (y * m_CurrentScreen.pitch)];
+    int32 pitch = currentScreen.pitch - width;
+    uint16* frameBuffer = &Engine.frameBuffer[x + (y * currentScreen.pitch)];
 
     int32 h = height;
     while (h--)
@@ -106,10 +106,198 @@ void Drawing::DrawRectangle(int32 x, int32 y, int32 width, int32 height)
         int32 w = width;
         while (w--)
         {
-            *frameBuffer = color;
+            *frameBuffer = color16;
             ++frameBuffer;
         }
 
         frameBuffer += pitch;
+    }
+}
+
+void Drawing::DrawLine(int32 x1, int32 y1, int32 x2, int32 y2)
+{
+    uint16 color16 = 0xFFFF;
+
+    int32 drawY1 = y1;
+    int32 drawX1 = x1;
+    int32 drawY2 = y2;
+    int32 drawX2 = x2;
+
+    int32 flags1 = 0;
+    if (drawX1 >= currentScreen.clipBound_X2)
+        flags1 = 2;
+    else if (drawX1 < currentScreen.clipBound_X1)
+        flags1 = 1;
+
+    if (drawY1 >= currentScreen.clipBound_Y2)
+        flags1 |= 8;
+    else if (drawY1 < currentScreen.clipBound_Y1)
+        flags1 |= 4;
+
+    int32 flags2 = 0;
+    if (drawX2 >= currentScreen.clipBound_X2)
+        flags2 = 2;
+    else if (drawX2 < currentScreen.clipBound_X1)
+        flags2 = 1;
+
+    if (drawY2 >= currentScreen.clipBound_Y2)
+        flags2 |= 8;
+    else if (drawY2 < currentScreen.clipBound_Y1)
+        flags2 |= 4;
+
+    while (flags1 || flags2) {
+        if (flags1 & flags2)
+            return;
+
+        int32 curFlags = flags2;
+        if (flags1)
+            curFlags = flags1;
+
+        int32 x = 0;
+        int32 y = 0;
+        if (curFlags & 8) {
+            int32 div = (drawY2 - drawY1);
+            if (!div)
+                div = 1;
+            x = drawX1 + ((drawX2 - drawX1) * (((currentScreen.clipBound_Y2 - drawY1) << 8) / div) >> 8);
+            y = currentScreen.clipBound_Y2;
+        }
+        else if (curFlags & 4) {
+            int32 div = (drawY2 - drawY1);
+            if (!div)
+                div = 1;
+            x = drawX1 + ((drawX2 - drawX1) * (((currentScreen.clipBound_Y1 - drawY1) << 8) / div) >> 8);
+            y = currentScreen.clipBound_Y1;
+        }
+        else if (curFlags & 2) {
+            int32 div = (drawX2 - drawX1);
+            if (!div)
+                div = 1;
+            x = currentScreen.clipBound_X2;
+            y = drawY1 + ((drawY2 - drawY1) * (((currentScreen.clipBound_X2 - drawX1) << 8) / div) >> 8);
+        }
+        else if (curFlags & 1) {
+            int32 div = (drawX2 - drawX1);
+            if (!div)
+                div = 1;
+            x = currentScreen.clipBound_X1;
+            y = drawY1 + ((drawY2 - drawY1) * (((currentScreen.clipBound_X1 - drawX1) << 8) / div) >> 8);
+        }
+
+        if (curFlags == flags1) {
+            drawX1 = x;
+            drawY1 = y;
+            flags1 = 0;
+            if (x > currentScreen.clipBound_X2) {
+                flags1 = 2;
+            }
+            else if (x < currentScreen.clipBound_X1) {
+                flags1 = 1;
+            }
+
+            if (y < currentScreen.clipBound_Y1) {
+                flags1 |= 4;
+            }
+            else if (y > currentScreen.clipBound_Y2) {
+                flags1 |= 8;
+            }
+        }
+        else {
+            drawX2 = x;
+            drawY2 = y;
+            flags2 = 0;
+            if (x > currentScreen.clipBound_X2) {
+                flags2 = 2;
+            }
+            else if (x < currentScreen.clipBound_X1) {
+                flags2 = 1;
+            }
+
+            if (y < currentScreen.clipBound_Y1) {
+                flags2 |= 4;
+            }
+            else if (y > currentScreen.clipBound_Y2) {
+                flags2 |= 8;
+            }
+        }
+    }
+
+    if (drawX1 > currentScreen.clipBound_X2)
+        drawX1 = currentScreen.clipBound_X2;
+    else if (drawX1 < currentScreen.clipBound_X1)
+        drawX1 = currentScreen.clipBound_X1;
+
+    if (drawY1 > currentScreen.clipBound_Y2)
+        drawY1 = currentScreen.clipBound_Y2;
+    else if (drawY1 < currentScreen.clipBound_Y1)
+        drawY1 = currentScreen.clipBound_Y1;
+
+    if (drawX2 > currentScreen.clipBound_X2)
+        drawX2 = currentScreen.clipBound_X2;
+    else if (drawX2 < currentScreen.clipBound_X1)
+        drawX2 = currentScreen.clipBound_X1;
+
+    if (drawY2 > currentScreen.clipBound_Y2)
+        drawY2 = currentScreen.clipBound_Y2;
+    else if (drawY2 < currentScreen.clipBound_Y1)
+        drawY2 = currentScreen.clipBound_Y1;
+
+    int32 sizeX = abs(drawX2 - drawX1);
+    int32 sizeY = abs(drawY2 - drawY1);
+    int32 max = sizeY;
+    int32 hSize = sizeX >> 2;
+    if (sizeX <= sizeY)
+        hSize = -sizeY >> 2;
+
+    if (drawX2 < drawX1) {
+        int32 v = drawX1;
+        drawX1 = drawX2;
+        drawX2 = v;
+
+        v = drawY1;
+        drawY1 = drawY2;
+        drawY2 = v;
+    }
+
+    uint16* frameBuffer = &Engine.frameBuffer[drawX1 + (drawY1 * currentScreen.pitch)];
+
+    if (drawY1 > drawY2) {
+        while (drawX1 < drawX2 || drawY1 >= drawY2) {
+            *frameBuffer = color16;
+
+            if (hSize > -sizeX) {
+                hSize -= max;
+                ++drawX1;
+                ++frameBuffer;
+            }
+
+            if (hSize < max) {
+                --drawY1;
+                hSize += sizeX;
+                frameBuffer -= currentScreen.pitch;
+            }
+        }
+    }
+    else {
+        while (true) {
+            *frameBuffer = color16;
+
+            if (drawX1 < drawX2 || drawY1 < drawY2) {
+                if (hSize > -sizeX) {
+                    hSize -= max;
+                    ++drawX1;
+                    ++frameBuffer;
+                }
+
+                if (hSize < max) {
+                    hSize += sizeX;
+                    ++drawY1;
+                    frameBuffer += currentScreen.pitch;
+                }
+            }
+            else {
+                break;
+            }
+        }
     }
 }
