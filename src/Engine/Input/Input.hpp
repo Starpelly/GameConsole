@@ -84,9 +84,6 @@ namespace Input
 
     bool CheckButtonDown(InputButtons button);
 
-    extern InputData keyPress;
-    extern InputData keyDown;
-
     extern InputButton inputDevice[INPUT_MAX];
 }
 

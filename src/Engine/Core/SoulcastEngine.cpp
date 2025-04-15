@@ -87,6 +87,8 @@ bool SoulcastEngine::Init()
 
 	Input::Init();
 	Drawing::Init();
+
+	return 0;
 }
 
 void SoulcastEngine::Run()
@@ -129,12 +131,14 @@ void SoulcastEngine::Run()
 			if (Input::CheckButtonDown(INPUT_DOWN))
 			{
 				y += 1;
+
+				// Drawing::SetPaletteColor(0, 0xFF00FF);
 			}
 
-			Drawing::ClearScreen();
-			Drawing::DrawRectangle(4, 4, 16, 16, Color());
+			Drawing::ClearScreen(1);
+			Drawing::DrawRectangle(4, 4, 16, 16, 27);
 
-			Drawing::DrawLine(x, y, 64, 64);
+			Drawing::DrawLine(x, y, 64, 64, 2);
 		}
 
 #if SOULCAST_USING_OPENGL && SOULCAST_USING_SDL3

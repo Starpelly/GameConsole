@@ -7,7 +7,7 @@
 // Standard Libs
 // =============
 #include <stdio.h>
-#include <string.h>
+#include <string>
 #include <cmath>
 
 // ==============
@@ -33,6 +33,12 @@ struct Color
 	uint8 g;
 	uint8 b;
 	uint8 a;
+};
+
+struct Vector2
+{
+	int32 x;
+	int32 y;
 };
 
 // =========
@@ -68,6 +74,7 @@ struct Color
 // ===============
 
 #include "Engine/Graphics/Drawing.hpp"
+#include "Engine/Graphics/Palette.hpp"
 #include "Engine/Input/Input.hpp"
 
 namespace Soulcast

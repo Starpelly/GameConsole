@@ -5,9 +5,6 @@ using namespace Soulcast;
 
 namespace Soulcast::Input
 {
-	InputData keyPress = InputData();
-	InputData keyDown  = InputData();
-
 	InputButton inputDevice[INPUT_MAX];
 
 #if SOULCAST_USING_SDL3
