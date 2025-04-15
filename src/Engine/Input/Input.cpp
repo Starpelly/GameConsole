@@ -15,7 +15,7 @@ namespace Soulcast::Input
 void Input::Init()
 {
 #if SOULCAST_USING_SDL3
-	SDL_InitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_GAMEPAD | SDL_INIT_HAPTIC);
+	// SDL_InitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_GAMEPAD | SDL_INIT_HAPTIC);
 
 	inputDevice[INPUT_UP].keyMappings = SDL_SCANCODE_UP;
 	inputDevice[INPUT_DOWN].keyMappings = SDL_SCANCODE_DOWN;
@@ -68,7 +68,7 @@ void Input::Process()
 void Input::Release()
 {
 #if SOULCAST_USING_SDL3
-	SDL_QuitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_GAMEPAD | SDL_INIT_HAPTIC);
+	// SDL_QuitSubSystem(SDL_INIT_JOYSTICK | SDL_INIT_GAMEPAD | SDL_INIT_HAPTIC);
 #endif
 }
 

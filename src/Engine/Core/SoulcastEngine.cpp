@@ -1,4 +1,5 @@
 #include "SoulcastEngine.hpp"
+#include "TestGame.hpp"
 
 using namespace Soulcast;
 
@@ -100,6 +101,8 @@ void SoulcastEngine::Run()
 	int32 x = 0;
 	int32 y = 0;
 
+	TestGame testGame;
+
 	while (running)
 	{
 		if (!vsync)
@@ -116,29 +119,8 @@ void SoulcastEngine::Run()
 		{
 			Input::Process();
 
-			if (Input::CheckButtonDown(INPUT_LEFT))
-			{
-				x -= 1;
-			}
-			if (Input::CheckButtonDown(INPUT_RIGHT))
-			{
-				x += 1;
-			}
-			if (Input::CheckButtonDown(INPUT_UP))
-			{
-				y -= 1;
-			}
-			if (Input::CheckButtonDown(INPUT_DOWN))
-			{
-				y += 1;
-
-				// Drawing::SetPaletteColor(0, 0xFF00FF);
-			}
-
-			Drawing::ClearScreen(1);
-			Drawing::DrawRectangle(4, 4, 16, 16, 27);
-
-			Drawing::DrawLine(x, y, 64, 64, 2);
+			testGame.Update();
+			testGame.Render();
 		}
 
 #if SOULCAST_USING_OPENGL && SOULCAST_USING_SDL3
@@ -149,10 +131,10 @@ void SoulcastEngine::Run()
 	}
 }
 
-void SoulcastEngine::Shutdown()
+void SoulcastEngine::Release()
 {
 	Input::Release();
-	Drawing::Shutdown();
+	Drawing::Release();
 
 #if SOULCAST_USING_SDL3
 	SDL_DestroyRenderer(Engine.renderer);

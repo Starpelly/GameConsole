@@ -51,7 +51,7 @@ int main(int argc, char* argv[])
 
 	Soulcast::Engine.Init();
 	Soulcast::Engine.Run();
-	Soulcast::Engine.Shutdown();
+	Soulcast::Engine.Release();
 
 	return 0;
 }

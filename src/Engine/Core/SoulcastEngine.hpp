@@ -87,7 +87,7 @@ public:
 
 	bool Init();
 	void Run();
-	void Shutdown();
+	void Release();
 	bool ProcessEvents();
 
 public:
@@ -97,7 +97,7 @@ public:
 	bool vsync					= false;
 
 	int scalingMode				= 0;
-	int windowScale				= 4;
+	int windowScale				= 5;
 	int refreshRate				= REFRESH_RATE;
 	int screenRefreshRate		= REFRESH_RATE;
 	int targetRefreshRate		= REFRESH_RATE;

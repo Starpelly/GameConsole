@@ -32,7 +32,7 @@ void Drawing::Init()
     activePalette = Palette::LoadPaletteBank("D:/Soulcast/aseprite_default.pal");
 }
 
-void Drawing::Shutdown()
+void Drawing::Release()
 {
 
 }
@@ -151,6 +151,11 @@ void Drawing::DrawRectangle(int32 x, int32 y, int32 width, int32 height, uint8 c
 
         frameBuffer += pitch;
     }
+}
+
+void Drawing::DrawCircle(int32 x, int32 y, int32 radius, uint8 color)
+{
+    if (radius <= 0) return;
 }
 
 void Drawing::DrawLine(int32 x1, int32 y1, int32 x2, int32 y2, uint8 color)
