@@ -38,14 +38,22 @@ struct Vector2
 // ===============
 // General Defines
 // ===============
-#define SCREEN_XSIZE	(320)
-#define SCREEN_YSIZE	(180)
+#define SCREEN_XSIZE	(320)	// 480
+#define SCREEN_YSIZE	(180)	// 270
 
 #define REFRESH_RATE	(60)
 
 #if SOULCAST_USING_SDL3
 	#include <SDL3/SDL.h>
 #endif
+
+enum SoulcastStates
+{
+	ENGINE_MAINGAME,
+	ENGINE_EXITGAME,
+	ENGINE_PAUSE,
+	ENGINE_WAIT
+};
 
 // ===============
 // Engine Includes
@@ -70,6 +78,9 @@ namespace Soulcast
 	public:
 		bool initialized			= false;
 		bool running				= false;
+
+		SoulcastStates mode			= ENGINE_MAINGAME;
+
 		bool borderless				= false;
 		bool vsync					= false;
 

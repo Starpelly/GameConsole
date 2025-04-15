@@ -9,9 +9,10 @@ bool SoulcastEngine::Init()
 {
 	initialized = true;
 	running = true;
+	mode = ENGINE_MAINGAME;
 
 #if SOULCAST_USING_SDL3
-	SDL_Init(SDL_INIT_VIDEO);
+	SDL_Init(SDL_INIT_EVENTS);
 
 	SDL_SetHint(SDL_HINT_RENDER_VSYNC, Engine.vsync ? "1" : "0");
 	SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
@@ -98,14 +99,13 @@ void SoulcastEngine::Run()
 	uint64 curTicks = 0;
 	uint64 prevTicks = 0;
 
-	int32 x = 0;
-	int32 y = 0;
+	bool masterPaused = false;
 
 	TestGame testGame;
 
-	while (running)
+	while (Engine.running)
 	{
-		if (!vsync)
+		if (!Engine.vsync)
 		{
 			curTicks = SDL_GetPerformanceCounter();
 			if (curTicks < prevTicks + targetFreq)
@@ -113,30 +113,54 @@ void SoulcastEngine::Run()
 			prevTicks = curTicks;
 		}
 
-		running = ProcessEvents();
+		Engine.running = ProcessEvents();
 
-		for (int s = 0; s < gameSpeed; ++s)
+		for (int s = 0; s < Engine.gameSpeed; ++s)
 		{
 			Input::Process();
 
-			testGame.Update();
-			testGame.Render();
+			if (!masterPaused || Engine.frameStep)
+			{
+				switch (Engine.mode)
+				{
+				case ENGINE_MAINGAME:
+					testGame.Update();
+					testGame.Render();
+					break;
+
+				case ENGINE_EXITGAME:
+					Engine.running = false;
+					break;
+
+				case ENGINE_PAUSE:
+				case ENGINE_WAIT:
+					break;
+
+				default: break;
+				}
+			}
 		}
+
+		Drawing::Present();
 
 #if SOULCAST_USING_OPENGL && SOULCAST_USING_SDL3
 		SDL_GL_SwapWindow(Engine.window);
 #endif
 
-		Drawing::Present();
+		Engine.frameStep = false;
 	}
+
+	Release();
 }
 
 void SoulcastEngine::Release()
 {
-	Input::Release();
 	Drawing::Release();
+	Input::Release();
 
+	free(Engine.frameBuffer);
 #if SOULCAST_USING_SDL3
+	SDL_DestroyTexture(Engine.screenBuffer);
 	SDL_DestroyRenderer(Engine.renderer);
 	SDL_DestroyWindow(Engine.window);
 
@@ -153,9 +177,9 @@ bool SoulcastEngine::ProcessEvents()
 		switch (event.type)
 		{
 		case SDL_EVENT_TERMINATING:
-			return false;
+			Engine.mode = ENGINE_EXITGAME; return false;
 		case SDL_EVENT_QUIT:
-			return false;
+			Engine.mode = ENGINE_EXITGAME; return false;
 
 		case SDL_EVENT_KEY_DOWN:
 

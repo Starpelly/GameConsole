@@ -107,6 +107,18 @@ void Drawing::ClearScreen(uint8 colIndex)
     }
 }
 
+uint16 Drawing::GetPixel(int32 x, int32 y)
+{
+    if (x < currentScreen.clipBound_X1 || y < currentScreen.clipBound_Y1 || x >= currentScreen.clipBound_X2 || y >= currentScreen.clipBound_Y2) return 0;
+    return Engine.frameBuffer[x + y * currentScreen.pitch];
+}
+
+void Drawing::SetPixel(int32 x, int32 y, uint8 color)
+{
+    if (x < currentScreen.clipBound_X1 || y < currentScreen.clipBound_Y1 || x >= currentScreen.clipBound_X2 || y >= currentScreen.clipBound_Y2) return;
+    Engine.frameBuffer[x + y * currentScreen.pitch] = PALETTE_ENTRY_TO_RGB565(color);
+}
+
 void Drawing::DrawRectangle(int32 x, int32 y, int32 width, int32 height, uint8 colIndex)
 {
     uint16 color16 = PALETTE_ENTRY_TO_RGB565(colIndex);
