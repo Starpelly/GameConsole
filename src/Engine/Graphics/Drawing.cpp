@@ -29,7 +29,7 @@ void Drawing::Init()
     currentScreen.clipBound_Y1 = 0;
     currentScreen.clipBound_Y2 = SCREEN_YSIZE;
 
-    activePalette = Palette::LoadPaletteBank("D:/Soulcast/aseprite_default.pal");
+    activePalette = Palette::LoadPaletteBank("D:/Soulcast/pico8.pal");
 }
 
 void Drawing::Release()

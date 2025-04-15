@@ -28,5 +28,5 @@ void TestGame::Update()
 void TestGame::Render()
 {
 	Drawing::ClearScreen(1);
-	Drawing::DrawRectangle(x, y, 16, 16, 27);
+	Drawing::DrawRectangle(x, y, 16, 16, 2);
 }

@@ -51,7 +51,7 @@ static std::vector<PaletteEntry> LoadJASCPalette(const std::string& filename)
     return palette;
 }
 
-PaletteBank Soulcast::Palette::LoadPaletteBank(const char* filePath)
+PaletteBank Palette::LoadPaletteBank(const char* filePath)
 {
 	auto parsedColors = LoadJASCPalette(filePath);
 
