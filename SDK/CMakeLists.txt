@@ -13,6 +13,8 @@ find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
 find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
 
 set(SOULCAST_SDK_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
+set(SOULCAST_SDK_VENDOR_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vendor)
+set(SOULCAST_SDK_RESOURCES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/resources)
 
 set(PROJECT_SOURCES
     ${SOULCAST_SDK_SOURCE_DIR}/main.cpp
@@ -40,6 +42,7 @@ else()
     else()
         add_executable(SoulcastSDK
             ${PROJECT_SOURCES}
+            ${SOULCAST_SDK_RESOURCES_DIR}/main.qrc
         )
     endif()
 endif()
@@ -70,6 +73,19 @@ install(TARGETS SoulcastSDK
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(SoulcastSDK)
 endif()
+
+#--------------------------------------------------------------------
+# External libraries
+#--------------------------------------------------------------------
+add_subdirectory(${SOULCAST_SDK_VENDOR_DIR}/phantom)
+target_link_libraries(SoulcastSDK PRIVATE phantom)
+
+add_subdirectory(${SOULCAST_SDK_VENDOR_DIR}/QtPropertyBrowser)
+target_link_libraries(SoulcastSDK PRIVATE QtPropertyBrowser)
+
+add_subdirectory(${SOULCAST_SDK_VENDOR_DIR}/QCodeEditor)
+target_link_libraries(SoulcastSDK PRIVATE QCodeEditor)
+target_include_directories(SoulcastSDK PRIVATE ${SOULCAST_SDK_VENDOR_DIR}/QCodeEditor/include)
 
 #--------------------------------------------------------------------
 # Folder structuring in Visual Studio

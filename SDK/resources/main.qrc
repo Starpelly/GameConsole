@@ -1,0 +1,18 @@
+<RCC>
+    <qresource prefix="/">
+        <file>icons/build.png</file>
+        <file>icons/help.png</file>
+        <file>icons/package.png</file>
+        <file>icons/run.png</file>
+        <file>icons/settings.png</file>
+        <file>icons/scene_32.png</file>
+        <file>icons/scene_64.png</file>
+        <file>icons/redo.png</file>
+        <file>icons/save.png</file>
+        <file>icons/undo.png</file>
+        <file>icons/svn.png</file>
+        <file>icons/git.png</file>
+        <file>icons/palette.png</file>
+        <file>fonts/JetBrainsMono[wght].ttf</file>
+    </qresource>
+</RCC>
