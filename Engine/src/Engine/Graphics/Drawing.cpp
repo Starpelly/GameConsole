@@ -27,7 +27,7 @@ void Drawing::Init()
     currentScreen.clipBound_Y1 = 0;
     currentScreen.clipBound_Y2 = SCREEN_YSIZE;
 
-    Palette::LoadPaletteBank(activePalette, "D:/Soulcast/test/pico8.pal");
+    Palette::LoadPaletteBank(activePalette, "D:/Soulcast/test/Waves/Palettes/pico8.pal");
 }
 
 void Drawing::Release()

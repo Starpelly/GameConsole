@@ -14,5 +14,6 @@
         <file>icons/git.png</file>
         <file>icons/palette.png</file>
         <file>fonts/JetBrainsMono[wght].ttf</file>
+        <file>trinket.xml</file>
     </qresource>
 </RCC>
