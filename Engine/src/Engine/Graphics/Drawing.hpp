@@ -10,10 +10,6 @@ namespace Soulcast
 		void Release();
 		void Present();
 
-		void RotatePalette(uint8 startIndex, uint8 endIndex, bool right);
-		void RotatePaletteRel(uint8 startIndex, uint8 count, bool right);
-		void SetPaletteColor(uint8 index, uint32 color);
-
 		void ClearScreen(uint8 color);
 
 		uint16 GetPixel(int32 x, int32 y);

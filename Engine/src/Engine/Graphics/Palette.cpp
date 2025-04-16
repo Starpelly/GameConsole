@@ -8,6 +8,12 @@
 
 using namespace Soulcast;
 
+namespace Soulcast
+{
+    PaletteBank fullPalette;
+    PaletteEntry* activePalette = fullPalette;
+}
+
 static std::vector<PaletteEntry> LoadJASCPalette(const std::string& filename)
 {
     std::ifstream file(filename);
@@ -51,17 +57,54 @@ static std::vector<PaletteEntry> LoadJASCPalette(const std::string& filename)
     return palette;
 }
 
-PaletteBank Palette::LoadPaletteBank(const char* filePath)
+void Palette::LoadPaletteBank(PaletteEntry* out, const char* filePath)
 {
 	auto parsedColors = LoadJASCPalette(filePath);
 
-    PaletteEntry colors[PALETTE_BANK_SIZE]{};
 	for (int32 i = 0; i < PALETTE_BANK_SIZE; i++)
 	{
         if (i >= parsedColors.size())
-            colors[i] = PaletteEntry(0, 0, 0);
+            out[i] = PaletteEntry(0, 0, 0);
         else
-		    colors[i] = parsedColors[i];
+		    out[i] = parsedColors[i];
 	}
-	return PaletteBank(colors);
+}
+
+void Palette::RotatePalette(uint8 startIndex, uint8 endIndex, bool right)
+{
+    if (right)
+    {
+        auto startColor = activePalette[endIndex];
+        for (int i = endIndex; i > startIndex; --i)
+        {
+            activePalette[i] = activePalette[i - 1];
+        }
+        activePalette[startIndex] = startColor;
+    }
+    else
+    {
+        auto startColor = activePalette[startIndex];
+        for (int i = startIndex; i < endIndex; ++i)
+        {
+            activePalette[i] = activePalette[i + 1];
+        }
+        activePalette[endIndex] = startColor;
+    }
+}
+
+void Palette::RotatePaletteRel(uint8 startIndex, uint8 count, bool right)
+{
+    RotatePalette(startIndex, startIndex + count - 1, right);
+}
+
+void Palette::SetPaletteColor(uint8 index, uint32 color)
+{
+    // activePalette.Colors[index] = PaletteEntry(color;
+}
+
+void Palette::CopyPalette(uint8 src, uint8 dest)
+{
+    if (src < PALETTE_BANK_SIZE && dest < PALETTE_BANK_SIZE)
+    {
+    }
 }

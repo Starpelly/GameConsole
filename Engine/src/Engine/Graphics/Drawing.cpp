@@ -4,8 +4,6 @@ using namespace Soulcast;
 
 int GFX_LINESIZE;
 
-PaletteBank activePalette;
-
 struct ScreenInfo
 {
     int32 pitch;
@@ -18,7 +16,7 @@ struct ScreenInfo
 ScreenInfo currentScreen;
 
 #define PALETTE_ENTRY_TO_RGB565(entry) \
-    RGB888_TO_RGB565(activePalette.Colors[entry].r, activePalette.Colors[entry].g, activePalette.Colors[entry].b);
+    RGB888_TO_RGB565(activePalette[entry].r, activePalette[entry].g, activePalette[entry].b);
 
 void Drawing::Init()
 {
@@ -29,7 +27,7 @@ void Drawing::Init()
     currentScreen.clipBound_Y1 = 0;
     currentScreen.clipBound_Y2 = SCREEN_YSIZE;
 
-    activePalette = Palette::LoadPaletteBank("D:/Soulcast/pico8.pal");
+    Palette::LoadPaletteBank(activePalette, "D:/Soulcast/test/pico8.pal");
 }
 
 void Drawing::Release()
@@ -63,43 +61,11 @@ void Drawing::Present()
 #endif
 }
 
-void Drawing::RotatePalette(uint8 startIndex, uint8 endIndex, bool right)
-{
-    if (right)
-    {
-        auto startColor = activePalette.Colors[endIndex];
-        for (int i = endIndex; i > startIndex; --i)
-        {
-            activePalette.Colors[i] = activePalette.Colors[i - 1];
-        }
-        activePalette.Colors[startIndex] = startColor;
-    }
-    else
-    {
-        auto startColor = activePalette.Colors[startIndex];
-        for (int i = startIndex; i < endIndex; ++i)
-        {
-            activePalette.Colors[i] = activePalette.Colors[i + 1];
-        }
-        activePalette.Colors[endIndex] = startColor;
-    }
-}
-
-void Drawing::RotatePaletteRel(uint8 startIndex, uint8 count, bool right)
-{
-    RotatePalette(startIndex, startIndex + count - 1, right);
-}
-
-void Drawing::SetPaletteColor(uint8 index, uint32 color)
-{
-    // activePalette.Colors[index] = PaletteEntry(color;
-}
-
 void Drawing::ClearScreen(uint8 colIndex)
 {
     uint16 color = PALETTE_ENTRY_TO_RGB565(colIndex);
     auto* frameBuffer = Engine.frameBuffer;
-    int cnt = SCREEN_XSIZE * SCREEN_YSIZE;
+    int32 cnt = SCREEN_XSIZE * SCREEN_YSIZE;
     while (cnt--)
     {
         *frameBuffer = color;

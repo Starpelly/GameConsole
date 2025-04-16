@@ -1,5 +1,12 @@
 #pragma once
 
+class Entity
+{
+public:
+	int32 xPos;
+	int32 yPos;
+};
+
 class TestGame
 {
 public:

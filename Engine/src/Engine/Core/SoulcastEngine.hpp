@@ -19,18 +19,6 @@ struct Vector2
 	int32 y;
 };
 
-// =========
-// Platforms
-// =========
-#define SOULCAST_WIN	(0)
-#define SOULCAST_LINUX	(1)
-
-#if defined _WIN32
-	#define SOULCAST_PLATFORM (SOULCAST_WIN)
-#elif defined __linux__
-	#define SOULCAST_PLATFORM (SOULCAST_LINUX)
-#endif
-
 // ======================
 // Render device backends
 // ======================
@@ -39,7 +27,7 @@ struct Vector2
 // General Defines
 // ===============
 #define SCREEN_XSIZE	(320)	// 480
-#define SCREEN_YSIZE	(180)	// 270
+#define SCREEN_YSIZE	(240)	// 270
 
 #define REFRESH_RATE	(60)
 
@@ -59,13 +47,14 @@ enum SoulcastStates
 // Engine Includes
 // ===============
 
+#include "Engine/Core/Cartridge.hpp"
 #include "Engine/Graphics/Drawing.hpp"
 #include "Engine/Graphics/Palette.hpp"
 #include "Engine/Input/Input.hpp"
 
 namespace Soulcast
 {
-	class SoulcastEngine
+	class SOULCAST_API SoulcastEngine
 	{
 	public:
 		SoulcastEngine() = default;
@@ -103,5 +92,5 @@ namespace Soulcast
 	#endif
 	};
 
-	extern SoulcastEngine Engine;
+	extern SOULCAST_API SoulcastEngine Engine;
 }
