@@ -5,6 +5,7 @@ namespace Soulcast
 	#define PALETTE_BANK_COUNT	(8)
 	#define PALETTE_BANK_SIZE	(256)
 
+	#define PACK_RGBA8888(r, g, b, a) ((a << 24) | (b << 16) | (g << 8) | r)
 	#define RGB888_TO_RGB565(r, g, b)  ((b) >> 3) | (((g) >> 2) << 5) | (((r) >> 3) << 11)
 
 	struct PaletteEntry

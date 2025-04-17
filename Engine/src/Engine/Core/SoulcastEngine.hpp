@@ -47,9 +47,18 @@ enum SoulcastStates
 // Engine Includes
 // ===============
 
+#include "Engine/Core/Assert.hpp"
 #include "Engine/Core/Cartridge.hpp"
+#include "Engine/Core/CPU.hpp"
+#include "Engine/Core/Filesystem.hpp"
+#include "Engine/Core/Math.hpp"
+#include "Engine/Core/Platform.hpp"
+#include "Engine/Core/Stream.hpp"
+
 #include "Engine/Graphics/Drawing.hpp"
 #include "Engine/Graphics/Palette.hpp"
+#include "Engine/Graphics/Sprite.hpp"
+
 #include "Engine/Input/Input.hpp"
 
 namespace Soulcast

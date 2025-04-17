@@ -81,7 +81,7 @@ namespace Soulcast
         void Process();
         void Release();
 
-        bool CheckButtonDown(InputButtons button);
+        bool IsButtonDown(InputButtons button);
 
         extern InputButton inputDevice[INPUT_MAX];
     }

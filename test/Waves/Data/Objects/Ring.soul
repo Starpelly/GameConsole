@@ -1,4 +1,4 @@
-#include "Scripts/Collision.script";
+#include "Scripts/Collision.soul";
 
 // Events are built-in functions,
 // they only work on Object scripts

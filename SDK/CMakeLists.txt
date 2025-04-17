@@ -90,6 +90,10 @@ target_include_directories(SoulcastSDK PRIVATE ${SOULCAST_SDK_VENDOR_DIR}/QCodeE
 #--------------------------------------------------------------------
 # Folder structuring in Visual Studio
 #--------------------------------------------------------------------
+set_target_properties(phantom PROPERTIES FOLDER "Vendor/SDK")
+set_target_properties(QCodeEditor PROPERTIES FOLDER "Vendor/SDK")
+set_target_properties(QtPropertyBrowser PROPERTIES FOLDER "Vendor/SDK")
+
 if(MSVC_IDE)
     source_group("" FILES ${PROJECT_SOURCES})
 

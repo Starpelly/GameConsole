@@ -72,7 +72,7 @@ void Input::Release()
 #endif
 }
 
-bool Input::CheckButtonDown(InputButtons button)
+bool Input::IsButtonDown(InputButtons button)
 {
 	return inputDevice[button].hold;
 }

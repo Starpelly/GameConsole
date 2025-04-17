@@ -38,16 +38,26 @@ set(SDL_TEST_LIBRARY OFF)
 set(SDL_STATIC ON)
 set(SDL_SHARED OFF)
 
+add_subdirectory(${SOULCAST_ENGINE_VENDOR_DIR}/SDL3)
+target_include_directories(SoulcastEngine PRIVATE ${SOULCAST_ENGINE_VENDOR_DIR}/SDL3/include)
+
 target_link_libraries(SoulcastEngine PRIVATE SDL3-static)
 
-add_subdirectory(${SOULCAST_ENGINE_VENDOR_DIR}/SDL3)
-include_directories(${SOULCAST_ENGINE_VENDOR_DIR}/SDL3/include)
+#--------------------------------------------------------------------
+# spng
+#--------------------------------------------------------------------
+add_subdirectory(${SOULCAST_ENGINE_VENDOR_DIR}/libspng)
+target_include_directories(SoulcastEngine PRIVATE ${SOULCAST_ENGINE_VENDOR_DIR}/libspng/src)
+
+target_link_libraries(SoulcastEngine PRIVATE spng)
+
 
 #--------------------------------------------------------------------
 # Folder structuring in Visual Studio
 #--------------------------------------------------------------------
-set_target_properties(SDL3-static PROPERTIES FOLDER "Vendor")
-set_target_properties(SDL_uclibc PROPERTIES FOLDER "Vendor")
+set_target_properties(SDL3-static PROPERTIES FOLDER "Vendor/Engine")
+set_target_properties(SDL_uclibc PROPERTIES FOLDER "Vendor/Engine")
+set_target_properties(spng PROPERTIES FOLDER "Vendor/Engine")
 
 if(MSVC_IDE)
 	foreach(source IN LISTS SOULCAST_ENGINE_FILES)

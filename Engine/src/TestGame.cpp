@@ -8,24 +8,28 @@ using namespace Soulcast;
 
 void TestGame::Update()
 {
-	if (Input::CheckButtonDown(INPUT_LEFT))
+	if (Input::IsButtonDown(INPUT_RIGHT))
 	{
-		x -= 1;
+		speed += 0.02f;
 	}
-	if (Input::CheckButtonDown(INPUT_RIGHT))
+	else if (speed > 0.0f)
 	{
-		x += 1;
+		speed -= 0.02f;
 	}
-	if (Input::CheckButtonDown(INPUT_UP))
-	{
-		y -= 1;
-	}
-	if (Input::CheckButtonDown(INPUT_DOWN))
-	{
-		y += 1;
 
-		// Drawing::SetPaletteColor(0, 0xFF00FF);
+	if (Input::IsButtonDown(INPUT_LEFT))
+	{
+		speed -= 0.02f;
 	}
+	else if (speed < 0.0f)
+	{
+		speed += 0.02f;
+	}
+
+	pos_x += 6.0f * speed;
+
+	x = (int32)pos_x;
+	y = (int32)pos_y;
 }
 
 const int rx = SCREEN_XSIZE / 2;
@@ -42,8 +46,9 @@ static float t()
 
 void TestGame::Render()
 {
-	Drawing::ClearScreen(1);
+	Drawing::ClearScreen(9);
 
+	/*
 	for (int32 y = -ry; y < ry; y += 3)
 	{
 		for (int32 x = -rx; x < rx; x += 2)
@@ -53,4 +58,8 @@ void TestGame::Render()
 			Drawing::SetPixel(rx + x, static_cast<int32>(ry + y - z), 7);
 		}
 	}
+	*/
+
+	printf("%i\n", x);
+	Drawing::DrawSprite(x, y);
 }

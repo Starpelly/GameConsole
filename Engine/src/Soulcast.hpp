@@ -6,6 +6,8 @@
 #include <stdio.h>
 #include <string>
 #include <cmath>
+#include <vector>
+#include <filesystem>
 
 // ==============
 // Standard Types
@@ -44,4 +46,70 @@ using float64 = double;
 	#endif
 #else
 	#define SOULCAST_API
+#endif
+
+// =======================
+// Commonly used STL types
+// =======================
+using std::string;
+using std::string_view;
+
+#ifdef SOULCAST_DEBUG
+	#if defined(SOULCAST_PLATFORM_WINDOWS)
+		#define SOULCAST_DEBUGBREAK() __debugbreak()
+	#else
+		#error "Platform doesn't support debugbreak yet!"
+#endif
+	#define SOULCAST_ENABLE_ASSERTS
+#else
+	#define SOULCAST_DEBUGBREAK()
+#endif
+
+#define SOULCAST_EXPAND_MACRO(x) x
+#define SOULCAST_STRINGIFY_MACRO(x) #x
+
+#define SOULCAST_BIND_EVENT_FN(fn) [this](auto&&... args) -> decltype(auto) { return this->fn(std::forward<decltype(args)>(args)...); }
+
+// Functional, for App Callbacks
+#ifndef SOULCAST_NO_FUNCTIONAL
+#include <functional>
+namespace Soulcast
+{
+	template<class Ret, class...Args> using Func = std::function<Ret(Args...)>;
+}
+#else
+namespace Soulcast
+{
+	template<class Ret, class...Args> using Func = Ret(*)(Args...);
+}
+#endif
+
+namespace Soulcast
+{
+	template<typename T>
+	using Scope = std::unique_ptr<T>;
+	template<typename T, typename ... Args>
+	constexpr Scope<T> CreateScope(Args&& ... args)
+	{
+		return std::make_unique<T>(std::forward<Args>(args)...);
+	}
+
+	template<typename T>
+	using Ref = std::shared_ptr<T>;
+	template<typename T, typename ... Args>
+	constexpr Ref<T> CreateRef(Args&& ... args)
+	{
+		return std::make_shared<T>(std::forward<Args>(args)...);
+	}
+}
+
+#define DeleteAndNullify(x) { delete x; x = nullptr; }
+
+// NOTE: MSVC C++ compiler does not support compound literals (C99 feature)
+// Plain structures in C++ (without constructors) can be initialized with { }
+// This is called aggregate initialization (C++11 feature)
+#if defined(__cplusplus)
+#define CLITERAL(type)      type
+#else
+#define CLITERAL(type)      (type)
 #endif

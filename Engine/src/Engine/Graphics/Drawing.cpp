@@ -15,6 +15,8 @@ struct ScreenInfo
 
 ScreenInfo currentScreen;
 
+Image* testImage;
+
 #define PALETTE_ENTRY_TO_RGB565(entry) \
     RGB888_TO_RGB565(activePalette[entry].r, activePalette[entry].g, activePalette[entry].b);
 
@@ -27,12 +29,13 @@ void Drawing::Init()
     currentScreen.clipBound_Y1 = 0;
     currentScreen.clipBound_Y2 = SCREEN_YSIZE;
 
-    Palette::LoadPaletteBank(activePalette, "D:/Soulcast/test/Waves/Palettes/pico8.pal");
+    Palette::LoadPaletteBank(activePalette, "D:/Soulcast/test/Waves/Data/Palettes/sonic.pal");
+    testImage = new Image("D:/Soulcast/test/Waves/Data/Sprites/Sonic.png");
 }
 
 void Drawing::Release()
 {
-
+    delete testImage;
 }
 
 void Drawing::Present()
@@ -321,5 +324,90 @@ void Drawing::DrawLine(int32 x1, int32 y1, int32 x2, int32 y2, uint8 color)
                 break;
             }
         }
+    }
+}
+
+#define MIXIN_INCREMENT_PIXELS(incr) indices incr
+
+#define MIXIN_PIXEL_COLOR() \
+	uint16 color; \
+	bool transparent = false; \
+	\
+    uint8 paletteIndex = *indices;\
+	color = fullPalette[paletteIndex];\
+	transparent = paletteIndex == 0;\
+
+void Drawing::DrawSprite(int32 x, int32 y)
+{
+    x *= -1;
+    y *= -1;
+
+    auto* texture = testImage;
+    bool flippedX = false;
+    bool flippedY = false;
+
+    int32 sprX = 0;
+    int32 sprY = 0;
+
+    int width = texture->width;
+    int height = texture->height;
+
+    int widthFlip = width;
+    int heightFlip = height;
+
+    if (width + x > currentScreen.clipBound_X2)
+        width = currentScreen.clipBound_X2 - x;
+
+    if (x < currentScreen.clipBound_X1) {
+        int32 val = x - currentScreen.clipBound_X1;
+        sprX -= val;
+        width += val;
+        widthFlip += 2 * val;
+        x = currentScreen.clipBound_X1;
+    }
+
+    if (height + y > currentScreen.clipBound_Y2)
+        height = currentScreen.clipBound_Y2 - y;
+
+    if (y < currentScreen.clipBound_Y1) {
+        int32 val = y - currentScreen.clipBound_Y1;
+        sprY -= val;
+        height += val;
+        heightFlip += 2 * val;
+        y = currentScreen.clipBound_Y1;
+    }
+
+    if (width <= 0 || height <= 0)
+        return;
+
+    auto surface = texture;
+
+    int32 pitch = currentScreen.pitch - width;
+    int32 gfxPitch = 0;
+    uint8* lineBuffer = NULL;
+    uint16* frameBuffer = &Engine.frameBuffer[x + currentScreen.pitch * y];
+
+    uint8* indices = texture->pixels;
+    uint16* fullPalette = texture->palette;
+
+    gfxPitch = surface->width - width;
+
+    indices = &indices[sprX + texture->width * sprY];
+
+    while (height--)
+    {
+        int32 w = width;
+        while (w--)
+        {
+            MIXIN_PIXEL_COLOR();
+            if (!transparent)
+            {
+                *frameBuffer = color;
+            }
+            ++frameBuffer;
+            MIXIN_INCREMENT_PIXELS(++);
+        }
+        frameBuffer += pitch;
+        MIXIN_INCREMENT_PIXELS(+= gfxPitch);
     }
 }
