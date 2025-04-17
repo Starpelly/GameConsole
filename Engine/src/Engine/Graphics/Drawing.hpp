@@ -20,7 +20,5 @@ namespace Soulcast
 		void DrawLine(int32 x1, int32 y1, int32 x2, int32 y2, uint8 color);
 
 		void DrawSprite(int32 x, int32 y);
-
-		// void DrawSprite(int32 xPos, int32 yPos);
 	}
 }

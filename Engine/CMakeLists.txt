@@ -7,6 +7,7 @@ project(SoulcastEngine)
 
 set(SOULCAST_ENGINE_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(SOULCAST_ENGINE_VENDOR_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vendor)
+set(SOULCAST_PCH_FILE ${SOULCAST_ENGINE_SOURCE_DIR}/Soulcast.hpp)
 
 file(GLOB_RECURSE SOULCAST_ENGINE_FILES
     ${SOULCAST_ENGINE_SOURCE_DIR}/*.cpp
@@ -15,6 +16,13 @@ file(GLOB_RECURSE SOULCAST_ENGINE_FILES
 
 add_library(SoulcastEngine SHARED ${SOULCAST_ENGINE_FILES})
 include_directories(${SOULCAST_ENGINE_SOURCE_DIR})
+
+#--------------------------------------------------------------------
+# PCH
+#--------------------------------------------------------------------
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|MSVC")
+	target_precompile_headers(SoulcastEngine PRIVATE ${SOULCAST_PCH_FILE})
+endif()
 
 #--------------------------------------------------------------------
 # Compile Definitions
