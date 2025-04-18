@@ -6,6 +6,8 @@ using namespace Soulcast;
 namespace Soulcast::Input
 {
 	InputButton inputDevice[INPUT_MAX];
+	int32 mouseX;
+	int32 mouseY;
 
 #if SOULCAST_USING_SDL3
 	std::vector<SDL_Gamepad*> gamepads;
@@ -62,6 +64,11 @@ void Input::Process()
 
 	}
 
+	float x, y;
+	SDL_GetMouseState(&x, &y);
+	mouseX = (int32)x;
+	mouseY = (int32)y;
+
 #endif
 }
 
@@ -75,4 +82,9 @@ void Input::Release()
 bool Input::IsButtonDown(InputButtons button)
 {
 	return inputDevice[button].hold;
+}
+
+bool Input::IsButtonPressed(InputButtons button)
+{
+	return inputDevice[button].press;
 }

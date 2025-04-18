@@ -29,7 +29,7 @@ namespace Soulcast
 
 		void RotatePalette(uint8 startIndex, uint8 endIndex, bool right);
 		void RotatePaletteRel(uint8 startIndex, uint8 count, bool right);
-		void SetPaletteColor(uint8 index, uint32 color);
+		void SetPaletteColor(uint8 index, PaletteEntry color);
 		void CopyPalette(uint8 src, uint8 dest);
 	}
 }

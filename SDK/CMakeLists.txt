@@ -21,6 +21,8 @@ set(PROJECT_SOURCES
     ${SOULCAST_SDK_SOURCE_DIR}/MainWindow.cpp
     ${SOULCAST_SDK_SOURCE_DIR}/MainWindow.hpp
     ${SOULCAST_SDK_SOURCE_DIR}/mainwindow.ui
+    ${SOULCAST_SDK_SOURCE_DIR}/AssetBrowser.cpp
+    ${SOULCAST_SDK_SOURCE_DIR}/AssetBrowser.hpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)

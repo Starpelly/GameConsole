@@ -113,3 +113,9 @@ namespace Soulcast
 #else
 #define CLITERAL(type)      (type)
 #endif
+
+// ===
+// API
+// ===
+
+#define SOULCAST_API_FUNCTION(...)

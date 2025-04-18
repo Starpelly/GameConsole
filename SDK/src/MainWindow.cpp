@@ -6,6 +6,8 @@
 #include <QGLSLCompleter>
 #include <QGLSLHighlighter>
 
+#include "AssetBrowser.hpp"
+
 #define MIXIN_OPEN_MAIN_TAB(tool, title, widget)\
 auto tabName = std::string(tool);\
     tabName.append(" - ");\
@@ -57,7 +59,14 @@ MainWindow::MainWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    testCodeEditor(this, ui);
+    // Asset browser
+    {
+        auto* assetBrowser = new AssetBrowser();
+        assetBrowser->setMaximumWidth(250);
+        ui->assetTreeLayout->addWidget(assetBrowser);
+    }
+
+    // testCodeEditor(this, ui);
     // ui->tabWidget->addTab()
 }
 

@@ -1,5 +1,6 @@
 #include "SoulcastEngine.hpp"
 #include "TestGame.hpp"
+#include <iostream>
 
 using namespace Soulcast;
 
@@ -7,6 +8,17 @@ SoulcastEngine Soulcast::Engine = SoulcastEngine();
 
 bool SoulcastEngine::Init()
 {
+	auto workingDirectory = "D:/Soulcast/test/Sandbox/Data";
+
+	if (std::filesystem::exists(static_cast<string>(workingDirectory)))
+	{
+		std::filesystem::current_path(static_cast<string>(workingDirectory));
+	}
+	else
+	{
+		return false;
+	}
+
 	initialized = true;
 	running = true;
 	mode = ENGINE_MAINGAME;
@@ -87,6 +99,7 @@ bool SoulcastEngine::Init()
 	Engine.frameBuffer = new uint16[SCREEN_XSIZE * SCREEN_YSIZE];
 	memset(Engine.frameBuffer, 0, (SCREEN_XSIZE * SCREEN_YSIZE) * sizeof(uint16));
 
+	AudioDevice::Init();
 	Input::Init();
 	Drawing::Init();
 
@@ -94,7 +107,7 @@ bool SoulcastEngine::Init()
 }
 
 void SoulcastEngine::Run()
-{
+{	
 	uint64 targetFreq = SDL_GetPerformanceFrequency() / Engine.refreshRate;
 	uint64 curTicks = 0;
 	uint64 prevTicks = 0;
@@ -157,6 +170,7 @@ void SoulcastEngine::Release()
 {
 	Drawing::Release();
 	Input::Release();
+	AudioDevice::Release();
 
 	free(Engine.frameBuffer);
 #if SOULCAST_USING_SDL3

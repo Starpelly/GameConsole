@@ -29,8 +29,8 @@ void Drawing::Init()
     currentScreen.clipBound_Y1 = 0;
     currentScreen.clipBound_Y2 = SCREEN_YSIZE;
 
-    Palette::LoadPaletteBank(activePalette, "D:/Soulcast/test/Waves/Data/Palettes/sonic.pal");
-    testImage = new Image("D:/Soulcast/test/Waves/Data/Sprites/Sonic.png");
+    Palette::LoadPaletteBank(activePalette, "Palettes/sonic.pal");
+    testImage = new Image("Sprites/Sonic.png");
 }
 
 void Drawing::Release()
@@ -337,7 +337,7 @@ void Drawing::DrawLine(int32 x1, int32 y1, int32 x2, int32 y2, uint8 color)
 	color = fullPalette[paletteIndex];\
 	transparent = paletteIndex == 0;\
 
-void Drawing::DrawSprite(int32 x, int32 y)
+void Drawing::DrawSprite(Animator* animator, int32 x, int32 y)
 {
     x *= -1;
     y *= -1;

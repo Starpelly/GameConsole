@@ -97,9 +97,9 @@ void Palette::RotatePaletteRel(uint8 startIndex, uint8 count, bool right)
     RotatePalette(startIndex, startIndex + count - 1, right);
 }
 
-void Palette::SetPaletteColor(uint8 index, uint32 color)
+void Palette::SetPaletteColor(uint8 index, PaletteEntry color)
 {
-    // activePalette.Colors[index] = PaletteEntry(color;
+    activePalette[index] = color;
 }
 
 void Palette::CopyPalette(uint8 src, uint8 dest)

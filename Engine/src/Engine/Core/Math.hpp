@@ -2,7 +2,7 @@
 
 namespace Soulcast
 {
-	constexpr auto PI = (3.1415927f);
+	#define PI (3.1415927f)
 
 	enum class Endian
 	{

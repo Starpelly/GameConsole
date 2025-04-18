@@ -82,7 +82,10 @@ namespace Soulcast
         void Release();
 
         bool IsButtonDown(InputButtons button);
+        bool IsButtonPressed(InputButtons button);
 
         extern InputButton inputDevice[INPUT_MAX];
+        extern int32 mouseX;
+        extern int32 mouseY;
     }
 }

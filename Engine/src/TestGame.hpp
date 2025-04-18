@@ -10,6 +10,8 @@ public:
 class TestGame
 {
 public:
+	TestGame();
+	
 	void Update();
 	void Render();
 

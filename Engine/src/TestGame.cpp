@@ -3,8 +3,32 @@
 
 #include <iostream>
 #include <chrono>
+#include <sstream>
 
 using namespace Soulcast;
+
+struct TestAudioPlayer
+{
+	float freq = 440.0f;
+	float duty = 0.25f;
+};
+
+static int fileTest = 0;
+
+TestGame::TestGame()
+{
+}
+
+static void loadPCMFile(int test)
+{
+	std::ostringstream filename;
+	filename << "C:/Users/Braedon/Downloads/programmable_wave_samples/";
+	filename << std::setw(2) << std::setfill('0') << test;
+	filename << ".pcm";
+	Engine.soundChip.pcm = load4BitPCMFile(filename.str().c_str());
+
+	std::cout << "Loading sample " << filename.str() << std::endl;
+}
 
 void TestGame::Update()
 {
@@ -30,6 +54,25 @@ void TestGame::Update()
 
 	x = (int32)pos_x;
 	y = (int32)pos_y;
+
+	if (Input::IsButtonPressed(INPUT_DOWN))
+	{
+		// currentPlayer->duty -= 1 / 16.0f;
+		// AudioDevice::TestThing(freq);
+		fileTest--;
+		loadPCMFile(fileTest);
+	}
+	if (Input::IsButtonPressed(INPUT_UP))
+	{
+		// currentPlayer->duty += 1 / 16.0f;
+		// AudioDevice::TestThing(freq);
+
+		fileTest++;
+		loadPCMFile(fileTest);
+	}
+
+	auto mouseFreq = -(Input::mouseY - (SCREEN_YSIZE * Engine.windowScale));
+	AudioDevice::SetPCMFreq(mouseFreq);
 }
 
 const int rx = SCREEN_XSIZE / 2;
@@ -60,6 +103,10 @@ void TestGame::Render()
 	}
 	*/
 
-	printf("%i\n", x);
-	Drawing::DrawSprite(x, y);
+	// Drawing::DrawRectangle(32, -(player1.freq - (SCREEN_YSIZE / Engine.windowScale)), 8, 8, currentPlayer == &player1 ? 3 : 2);
+	// Drawing::DrawRectangle(128, -player2.freq, 8, 8, currentPlayer == &player2 ? 3 : 2);
+
+	// Palette::SetPaletteColor(3, PaletteEntry(188, 100, 93));
+
+	// Drawing::DrawSprite(x, y);
 }

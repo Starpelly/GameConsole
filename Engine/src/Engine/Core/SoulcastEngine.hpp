@@ -47,14 +47,15 @@ enum SoulcastStates
 // Engine Includes
 // ===============
 
+#include "Engine/Audio/Audio.hpp"
+
 #include "Engine/Core/Assert.hpp"
-#include "Engine/Core/Cartridge.hpp"
-#include "Engine/Core/CPU.hpp"
 #include "Engine/Core/Filesystem.hpp"
 #include "Engine/Core/Math.hpp"
 #include "Engine/Core/Platform.hpp"
 #include "Engine/Core/Stream.hpp"
 
+#include "Engine/Graphics/Animation.hpp"
 #include "Engine/Graphics/Drawing.hpp"
 #include "Engine/Graphics/Palette.hpp"
 #include "Engine/Graphics/Sprite.hpp"
@@ -91,6 +92,8 @@ namespace Soulcast
 		int gameSpeed				= 1;
 		bool frameStep				= false;
 
+		SoundChip soundChip;
+
 		uint16* frameBuffer			= nullptr;
 		uint32* texBuffer			= nullptr;
 
@@ -99,6 +102,9 @@ namespace Soulcast
 		SDL_Renderer* renderer		= nullptr;
 		SDL_Texture* screenBuffer	= nullptr;
 	#endif
+
+		// Audio interpolation settings pls
+
 	};
 
 	extern SOULCAST_API SoulcastEngine Engine;
