@@ -19,9 +19,9 @@ static void audioCallback(void* userdata, Uint8* stream, int len)
 		// l += Engine.soundChip.pulse1.GenerateSample();
 		// r += Engine.soundChip.pulse2.GenerateSample();
 
-		float pcmSample = Engine.soundChip.pcm.GenerateSample();
-		l += pcmSample;
-		r += pcmSample;
+		auto[pcmL, pcmR] = Engine.soundChip.pcm.GenerateSample();
+		l += pcmL;
+		r += pcmR;
 
 		// float noiseSample = Engine.soundChip.noise.GenerateSample() * 0.5f;
 		// l += noiseSample;
@@ -120,7 +120,12 @@ void AudioDevice::Release()
 #endif
 }
 
-void Soulcast::AudioDevice::SetPCMFreq(float freq)
+void AudioDevice::SetPCMFreq(float freq)
 {
 	Engine.soundChip.pcm.frequency = freq;
+}
+
+void AudioDevice::SetPCMPan(float pan)
+{
+	Engine.soundChip.pcm.pan = pan;
 }

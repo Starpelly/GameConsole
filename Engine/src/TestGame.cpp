@@ -71,8 +71,10 @@ void TestGame::Update()
 		loadPCMFile(fileTest);
 	}
 
+	auto mousePan = Math::lerp(-1, 1, ((float)Input::mouseX) / (SCREEN_XSIZE * Engine.windowScale));
 	auto mouseFreq = -(Input::mouseY - (SCREEN_YSIZE * Engine.windowScale));
 	AudioDevice::SetPCMFreq(mouseFreq);
+	AudioDevice::SetPCMPan(mousePan);
 }
 
 const int rx = SCREEN_XSIZE / 2;

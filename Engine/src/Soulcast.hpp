@@ -29,13 +29,40 @@ using float64 = double;
 // =========
 // Platforms
 // =========
-#define SOULCAST_WIN	(0)
-#define SOULCAST_LINUX	(1)
 
-#if defined _WIN32
+#if defined(__clang__)
+	#define COMPILER_CLANG
+#elif defined(__GNUC__)
+	#define COMPILER_GCC
+#elif defined(_MSC_VER)
+	#define COMPILER_MICROSOFT
+
+	#pragma warning(disable:4996) // libc "deprecation" warnings
+#else
+	#warning "unable to detect compiler"
+	#define COMPILER_UNKNOWN
+#endif
+
+#if defined(COMPILER_CLANG) || defined(COMPILER_GCC)
+	#define noinline   __attribute__((noinline))
+	#define alwaysinline  inline __attribute__((always_inline))
+#elif defined(COMPILER_MICROSOFT)
+	#define noinline   __declspec(noinline)
+	#define alwaysinline  inline __forceinline
+#else
+	#define noinline
+	#define alwaysinline  inline
+#endif
+
+#define SOULCAST_WIN	 (0)
+#define SOULCAST_LINUX	 (1)
+
+#if defined(_WIN32)
 	#define SOULCAST_PLATFORM (SOULCAST_WIN)
-#elif defined __linux__
+#elif defined(linux) || defined(__linux__)
 	#define SOULCAST_PLATFORM (SOULCAST_LINUX)
+#else
+	#warning "unable to detect platform"
 #endif
 
 #if SOULCAST_PLATFORM == SOULCAST_WIN

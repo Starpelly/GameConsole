@@ -42,9 +42,11 @@ namespace Soulcast
 		float frequency = 440.0f;
 		float sampleRate = AUDIO_FREQUENCY;
 
-		float GenerateSample()
+		float pan = 0.0f; // -1 = left, 0 = center, +1 = right
+
+		std::pair<float, float> GenerateSample()
 		{
-			if (empty) return 0.0f;
+			if (empty) return { 0.0f, 0.0f };
 
 			// Calculate index into 32-sample table
 			size_t index = static_cast<size_t>(phase) % 32;
@@ -53,11 +55,16 @@ namespace Soulcast
 			// Normalize 4-bit sample (0-15) to float -1.0 to +1.0
 			float sample = ((value / 15.0f) * 2.0f) - 1.0f;
 
+			// Equal-power pan
+			// Maybe this should be a macro?
+			float left = sample * std::sqrtf((1.0f - pan) * 0.5f);
+			float right = sample * std::sqrtf((1.0f + pan) * 0.5f);
+
 			// Advance phase
 			phase += frequency * 32.0f / sampleRate;
 			if (phase >= 32.0f) phase -= 32.0f;
 
-			return sample;
+			return { left, right };
 		}
 	};
 
@@ -105,6 +112,7 @@ namespace Soulcast
 		static void Release();
 
 		static void SetPCMFreq(float freq);
+		static void SetPCMPan(float pan);
 
 #if SOULCAST_USING_SDL3
 		static SDL_AudioDeviceID streamDeviceID;
