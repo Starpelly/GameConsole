@@ -58,19 +58,24 @@ PCMChannel Soulcast::load4BitPCMFile(const char* filename)
 		return channel;
 	}
 
-	uint8 byte;
-	while (in.read(reinterpret_cast<char*>(&byte), 1))
+	uint8 byte = 0;
+	uint8 index = 0;
+	while (index < PCM_CHANNEL_SNAPSHOTS && in.read(reinterpret_cast<char*>(&byte), 1))
 	{
 		// Each byte contains two 4-bit samples (high nibble and low nibble)
 		int16 high = (byte >> 4) & 0x0F;
 		int16 low = byte & 0x0F;
-		channel.data.push_back(high);
-		channel.data.push_back(low);
+
+		channel.data[index++] = high;
+		if (index < PCM_CHANNEL_SNAPSHOTS)
+			channel.data[index++] = low;
 	}
 
-	if (channel.data.size() != 32) {
-		std::cerr << "Warning: Expected 32 4-bit samples, got " << channel.data.size() << "\n";
+	if (index != PCM_CHANNEL_SNAPSHOTS) {
+		std::cerr << "Warning: Expected 32 4-bit samples, got " << index << "\n";
 	}
+
+	channel.empty = false;
 
 	return channel;
 }

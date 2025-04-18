@@ -8,6 +8,8 @@ namespace Soulcast
 	#define AUDIO_FREQUENCY	(44100)
 	#define AUDIO_CHANNELS	(4)
 
+	#define PCM_CHANNEL_SNAPSHOTS (32)
+
 	enum class WaveType
 	{
 		Square,
@@ -33,14 +35,16 @@ namespace Soulcast
 
 	struct PCMChannel
 	{
-		std::vector<int16> data;
+		int16 data[PCM_CHANNEL_SNAPSHOTS] = {};
+		bool empty = true;
+
 		float phase = 0.0f;
 		float frequency = 440.0f;
 		float sampleRate = AUDIO_FREQUENCY;
 
 		float GenerateSample()
 		{
-			if (data.empty()) return 0.0f;
+			if (empty) return 0.0f;
 
 			// Calculate index into 32-sample table
 			size_t index = static_cast<size_t>(phase) % 32;
