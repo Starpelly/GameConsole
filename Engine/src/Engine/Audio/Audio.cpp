@@ -105,8 +105,6 @@ void AudioDevice::Init()
 	// Start audio
 	SDL_ResumeAudioDevice(streamDeviceID);
 #endif
-
-	// Engine.soundChip.pcm = load4BitPCMFile("C:/Users/Braedon/Downloads/programmable_wave_samples/03.pcm");
 }
 
 void AudioDevice::Release()

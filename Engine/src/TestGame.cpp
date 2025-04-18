@@ -14,15 +14,27 @@ struct TestAudioPlayer
 };
 
 static int fileTest = 0;
+static int mosaic = 1;
+
+Image* testImage1;
+Image* testImage2;
 
 TestGame::TestGame()
 {
+	testImage1 = new Image("Sprites/Sonic.png");
+	testImage2 = new Image("Sprites/SonicBG.png");
+}
+
+TestGame::~TestGame()
+{
+	delete testImage1;
+	delete testImage2;
 }
 
 static void loadPCMFile(int test)
 {
 	std::ostringstream filename;
-	filename << "C:/Users/Braedon/Downloads/programmable_wave_samples/";
+	filename << "SoundFX/programmable_wave_samples/";
 	filename << std::setw(2) << std::setfill('0') << test;
 	filename << ".pcm";
 	Engine.soundChip.pcm = load4BitPCMFile(filename.str().c_str());
@@ -70,6 +82,14 @@ void TestGame::Update()
 		fileTest++;
 		loadPCMFile(fileTest);
 	}
+	if (Input::IsButtonPressed(INPUT_LEFT))
+	{
+		mosaic--;
+	}
+	if (Input::IsButtonPressed(INPUT_RIGHT))
+	{
+		mosaic++;
+	}
 
 	auto mousePan = Math::lerp(-1, 1, ((float)Input::mouseX) / (SCREEN_XSIZE * Engine.windowScale));
 	auto mouseFreq = -(Input::mouseY - (SCREEN_YSIZE * Engine.windowScale));
@@ -93,22 +113,24 @@ void TestGame::Render()
 {
 	Drawing::ClearScreen(9);
 
-	/*
 	for (int32 y = -ry; y < ry; y += 3)
 	{
 		for (int32 x = -rx; x < rx; x += 2)
 		{
 			float32 dist = std::sqrt(static_cast<float32>(x * x + y * y));
 			float32 z = std::cos(dist / 6.0f - (t() * 8)) * 6.0f;
-			Drawing::SetPixel(rx + x, static_cast<int32>(ry + y - z), 7);
+			// Drawing::SetPixel(rx + x, static_cast<int32>(ry + y - z), 4);
 		}
 	}
-	*/
 
 	// Drawing::DrawRectangle(32, -(player1.freq - (SCREEN_YSIZE / Engine.windowScale)), 8, 8, currentPlayer == &player1 ? 3 : 2);
 	// Drawing::DrawRectangle(128, -player2.freq, 8, 8, currentPlayer == &player2 ? 3 : 2);
 
 	// Palette::SetPaletteColor(3, PaletteEntry(188, 100, 93));
 
-	// Drawing::DrawSprite(x, y);
+	Drawing::DrawSprite(testImage2, x * 0.4f, y);
+	
+	Drawing::ApplyMosaicEffect(mosaic);
+	
+	Drawing::DrawSprite(testImage1, x, y);
 }

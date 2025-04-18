@@ -11,6 +11,7 @@ class TestGame
 {
 public:
 	TestGame();
+	~TestGame();
 	
 	void Update();
 	void Render();

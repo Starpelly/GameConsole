@@ -15,8 +15,6 @@ struct ScreenInfo
 
 ScreenInfo currentScreen;
 
-Image* testImage;
-
 #define PALETTE_ENTRY_TO_RGB565(entry) \
     RGB888_TO_RGB565(activePalette[entry].r, activePalette[entry].g, activePalette[entry].b);
 
@@ -30,12 +28,10 @@ void Drawing::Init()
     currentScreen.clipBound_Y2 = SCREEN_YSIZE;
 
     Palette::LoadPaletteBank(activePalette, "Palettes/sonic.pal");
-    testImage = new Image("Sprites/Sonic.png");
 }
 
 void Drawing::Release()
 {
-    delete testImage;
 }
 
 void Drawing::Present()
@@ -337,12 +333,12 @@ void Drawing::DrawLine(int32 x1, int32 y1, int32 x2, int32 y2, uint8 color)
 	color = fullPalette[paletteIndex];\
 	transparent = paletteIndex == 0;\
 
-void Drawing::DrawSprite(Animator* animator, int32 x, int32 y)
+void Drawing::DrawSprite(Image* image, int32 x, int32 y)
 {
     x *= -1;
     y *= -1;
 
-    auto* texture = testImage;
+    auto* texture = image;
     bool flippedX = false;
     bool flippedY = false;
 
@@ -409,5 +405,34 @@ void Drawing::DrawSprite(Animator* animator, int32 x, int32 y)
         }
         frameBuffer += pitch;
         MIXIN_INCREMENT_PIXELS(+= gfxPitch);
+    }
+}
+
+void Drawing::ApplyMosaicEffect(int32 size)
+{
+    if (size <= 1) return; // A value of 1 is visually indistinguishable
+
+    for (int y = 0; y < SCREEN_YSIZE; y += size)
+    {
+        for (int x = 0; x < SCREEN_XSIZE; x += size)
+        {
+            // Sample the top-left pixel of the block
+            int topLeftIndex = y * SCREEN_XSIZE + x;
+            uint16 color = Engine.frameBuffer[topLeftIndex];
+
+            // Fill the block with the sampled pixel
+            for (int dy = 0; dy < size; ++dy)
+            {
+                for (int dx = 0; dx < size; ++dx)
+                {
+                    int px = x + dx;
+                    int py = y + dy;
+                    if (px < SCREEN_XSIZE && py < SCREEN_YSIZE)
+                    {
+                        Engine.frameBuffer[py * SCREEN_XSIZE + px] = color;
+                    }
+                }
+            }
+        }
     }
 }
