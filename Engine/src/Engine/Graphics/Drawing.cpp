@@ -6,6 +6,7 @@ int GFX_LINESIZE;
 
 struct ScreenInfo
 {
+    Vector2 position;
     int32 pitch;
     int32 clipBound_X1;
     int32 clipBound_Y1;
@@ -14,11 +15,12 @@ struct ScreenInfo
 };
 
 ScreenInfo currentScreen;
+bool screenRelative = false;
 
 #define PALETTE_ENTRY_TO_RGB565(entry) \
     RGB888_TO_RGB565(activePalette[entry].r, activePalette[entry].g, activePalette[entry].b);
 
-void Drawing::Init()
+void PPU::Init()
 {
     currentScreen.pitch = SCREEN_XSIZE;
 
@@ -28,11 +30,11 @@ void Drawing::Init()
     currentScreen.clipBound_Y2 = SCREEN_YSIZE;
 }
 
-void Drawing::Release()
+void PPU::Release()
 {
 }
 
-void Drawing::Present()
+void PPU::Present()
 {
 #if SOULCAST_USING_SDL3
     SDL_FRect destScreenPos = { 0 };
@@ -58,7 +60,7 @@ void Drawing::Present()
 #endif
 }
 
-void Drawing::ClearScreen(uint8 colIndex)
+void PPU::ClearScreen(uint8 colIndex)
 {
     uint16 color = PALETTE_ENTRY_TO_RGB565(colIndex);
     auto* frameBuffer = Engine.frameBuffer;
@@ -70,19 +72,29 @@ void Drawing::ClearScreen(uint8 colIndex)
     }
 }
 
-uint16 Drawing::GetPixel(int32 x, int32 y)
+uint16 PPU::GetPixel(int32 x, int32 y)
 {
     if (x < currentScreen.clipBound_X1 || y < currentScreen.clipBound_Y1 || x >= currentScreen.clipBound_X2 || y >= currentScreen.clipBound_Y2) return 0;
     return Engine.frameBuffer[x + y * currentScreen.pitch];
 }
 
-void Drawing::SetPixel(int32 x, int32 y, uint8 color)
+void PPU::SetPixel(int32 x, int32 y, uint8 color)
 {
     if (x < currentScreen.clipBound_X1 || y < currentScreen.clipBound_Y1 || x >= currentScreen.clipBound_X2 || y >= currentScreen.clipBound_Y2) return;
     Engine.frameBuffer[x + y * currentScreen.pitch] = PALETTE_ENTRY_TO_RGB565(color);
 }
 
-void Drawing::DrawRectangle(int32 x, int32 y, int32 width, int32 height, uint8 colIndex)
+Vector2 PPU::GetScreenPosition()
+{
+    return currentScreen.position;
+}
+
+void PPU::SetScreenPosition(int32 x, int32 y)
+{
+    currentScreen.position = { x, y };
+}
+
+void PPU::DrawRectangle(int32 x, int32 y, int32 width, int32 height, uint8 colIndex)
 {
     uint16 color16 = PALETTE_ENTRY_TO_RGB565(colIndex);
 
@@ -128,12 +140,12 @@ void Drawing::DrawRectangle(int32 x, int32 y, int32 width, int32 height, uint8 c
     }
 }
 
-void Drawing::DrawCircle(int32 x, int32 y, int32 radius, uint8 color)
+void PPU::DrawCircle(int32 x, int32 y, int32 radius, uint8 color)
 {
     if (radius <= 0) return;
 }
 
-void Drawing::DrawLine(int32 x1, int32 y1, int32 x2, int32 y2, uint8 color)
+void PPU::DrawLine(int32 x1, int32 y1, int32 x2, int32 y2, uint8 color)
 {
     uint16 color16 = PALETTE_ENTRY_TO_RGB565(color);
 
@@ -331,19 +343,20 @@ void Drawing::DrawLine(int32 x1, int32 y1, int32 x2, int32 y2, uint8 color)
 	color = fullPalette[paletteIndex].Packed();\
 	transparent = paletteIndex == 0;\
 
-void Drawing::DrawBackground(Image* image, int32 x, int32 y)
+void PPU::DrawBackground(Image* image, int32 x, int32 y)
 {
-    const int32 hstart = x;
-    const int32 vstart = y;
-
-    auto* texture = image;
-
     // These need to be casted to signed integers because we need negative numbers to wrap properly.
-    const auto bitmapWidth = (int32)texture->width;
-    const auto bitmapHeight = (int32)texture->height;
+    const auto bitmapWidth = (int32)image->width;
+    const auto bitmapHeight = (int32)image->height;
 
-    auto drawWidth = bitmapWidth;
-    auto drawHeight = bitmapHeight;
+    int32 drawWidth = bitmapWidth;
+    int32 drawHeight = bitmapHeight;
+
+    if (!screenRelative)
+    {
+        x -= currentScreen.position.x;
+        y -= currentScreen.position.y;
+    }
 
     if (drawWidth > currentScreen.clipBound_X2)
         drawWidth = currentScreen.clipBound_X2;
@@ -353,6 +366,9 @@ void Drawing::DrawBackground(Image* image, int32 x, int32 y)
 
     if (drawWidth <= 0 || drawHeight <= 0)
         return;
+
+    const int32 hstart = x;
+    const int32 vstart = y;
 
     // Wrapping
     int32 sprX = hstart % bitmapWidth;
@@ -392,7 +408,7 @@ void Drawing::DrawBackground(Image* image, int32 x, int32 y)
             width = x1 - x;
 
             uint16* dstPixel = (uint16*)frameBuffer;
-            uint8* srcPixel = (uint8*)(texture->pixels + (ypos)*texture->pitch + (xpos)); // palette index
+            uint8* srcPixel = (uint8*)(image->pixels + (ypos)*image->pitch + (xpos)); // palette index
 
             int32 blitWidth = width;
             while (blitWidth)
@@ -415,12 +431,17 @@ void Drawing::DrawBackground(Image* image, int32 x, int32 y)
     }
 }
 
-void Drawing::DrawSprite(Image* image, int32 x, int32 y)
+void PPU::DrawSprite(Sprite* sprite, int32 x, int32 y)
 {
-    x *= -1;
-    y *= -1;
+    if (sprite->image == nullptr) return;
 
-    auto* texture = image;
+    if (!screenRelative)
+    {
+        x += currentScreen.position.x;
+        y += currentScreen.position.y;
+    }
+
+    auto* texture = sprite->image;
     bool flippedX = false;
     bool flippedY = false;
 
@@ -490,7 +511,7 @@ void Drawing::DrawSprite(Image* image, int32 x, int32 y)
     }
 }
 
-void Drawing::ApplyMosaicEffect(int32 size)
+void PPU::ApplyMosaicEffect(int32 size)
 {
     if (size <= 1) return; // A value of 1 is visually indistinguishable
 

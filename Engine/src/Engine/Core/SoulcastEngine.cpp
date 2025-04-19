@@ -101,7 +101,7 @@ bool SoulcastEngine::Init()
 
 	AudioDevice::Init();
 	Input::Init();
-	Drawing::Init();
+	PPU::Init();
 
 	return 0;
 }
@@ -154,7 +154,7 @@ void SoulcastEngine::Run()
 			}
 		}
 
-		Drawing::Present();
+		PPU::Present();
 
 #if SOULCAST_USING_OPENGL && SOULCAST_USING_SDL3
 		SDL_GL_SwapWindow(Engine.window);
@@ -168,7 +168,7 @@ void SoulcastEngine::Run()
 
 void SoulcastEngine::Release()
 {
-	Drawing::Release();
+	PPU::Release();
 	Input::Release();
 	AudioDevice::Release();
 

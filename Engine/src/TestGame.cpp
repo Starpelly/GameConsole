@@ -13,25 +13,36 @@ struct TestAudioPlayer
 	float duty = 0.25f;
 };
 
+struct
+{
+	Vector2 cameraPos;
+} State;
+
 static int fileTest = 0;
 static int mosaic = 1;
 
-Image* testImage1;
-Image* testImage2;
+Image testImage1;
+Image testImage2;
+Image marioTexture;
+
+Sprite testSprite;
 
 TestGame::TestGame()
 {
-	testImage1 = new Image("Sprites/switch.png");
-	testImage2 = new Image("Sprites/palacebg.png");
+	testImage1.Load("Sprites/switch.png");
+	testImage2.Load("Sprites/palacebg.png");
+
+	marioTexture.Load("Sprites/mario.png");
 
 	Palette::LoadPaletteBank(0, "Palettes/switch.pal");
 	Palette::LoadPaletteBank(1, "Palettes/palacebg.pal");
+	Palette::LoadPaletteBank(2, "Palettes/mario.pal");
+
+	testSprite.image = &marioTexture;
 }
 
 TestGame::~TestGame()
 {
-	delete testImage1;
-	delete testImage2;
 }
 
 static void loadPCMFile(int test)
@@ -67,8 +78,8 @@ void TestGame::Update()
 
 	pos_x += 6.0f * speed;
 
-	x = (int32)pos_x;
-	y = (int32)pos_y;
+	State.cameraPos.x = (int32)pos_x;
+	State.cameraPos.y = (int32)pos_y;
 
 	if (Input::IsButtonPressed(INPUT_DOWN))
 	{
@@ -114,25 +125,32 @@ static float t()
 
 void TestGame::Render()
 {
-	Drawing::ClearScreen(9);
+	PPU::ClearScreen(9);
 
+#if false
 	for (int32 y = -ry; y < ry; y += 3)
 	{
 		for (int32 x = -rx; x < rx; x += 2)
 		{
 			float32 dist = std::sqrt(static_cast<float32>(x * x + y * y));
 			float32 z = std::cos(dist / 6.0f - (t() * 8)) * 6.0f;
-			// Drawing::SetPixel(rx + x, static_cast<int32>(ry + y - z), 4);
+			PPU::SetPixel(rx + x, static_cast<int32>(ry + y - z), 4);
 		}
 	}
+#endif
+
+	PPU::SetScreenPosition(-State.cameraPos.x, -State.cameraPos.y);
 
 	Palette::SetActivePalette(1);
-	Drawing::DrawBackground(testImage2, x * 0.3f, y + 192);
+	PPU::DrawBackground(&testImage2, 0, 192);
 	
 	Palette::SetActivePalette(0);
-	Drawing::DrawBackground(testImage1, x, y + 184);
+	PPU::DrawBackground(&testImage1, 0, 184);
 
-	Drawing::ApplyMosaicEffect(mosaic);
+	Palette::SetActivePalette(2);
+	PPU::DrawSprite(&testSprite, 64, 168);
+
+	PPU::ApplyMosaicEffect(mosaic);
 }
 
 void PlayerEntity::Update()

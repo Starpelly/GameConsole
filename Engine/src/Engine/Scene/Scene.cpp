@@ -2,8 +2,8 @@
 
 namespace Soulcast
 {
-	BackgroundLayer backgroundLayers[BACKGROUND_LAYER_COUNT];
-	Object objectList[OBJECT_COUNT];
+	BackgroundLayer Scene::backgroundLayers[BACKGROUND_LAYER_COUNT];
+	Object Scene::objectList[OBJECT_COUNT];
 }
 
 using namespace Soulcast;

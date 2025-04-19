@@ -34,7 +34,16 @@ size_t getBytesPerPixel(const spng_ihdr* ihdr)
     return (size_t)(bits_per_pixel + 7) / 8; // Add 7 and divide to round up
 }
 
-Image::Image(const char* fileName)
+Image::Image()
+{
+}
+
+Image::~Image()
+{
+    Dispose();
+}
+
+void Image::Load(const char* fileName)
 {
     FILE* png_file = fopen(fileName, "rb");
     if (!png_file)
@@ -128,12 +137,17 @@ Image::Image(const char* fileName)
 
     bpp = getBytesPerPixel(&ihdr);
     pitch = width * bpp;
+    disposed = false;
     // m_ColorFormat = (ColorFormat)ihdr.color_type;
 }
 
-Image::~Image()
+void Image::Dispose()
 {
+    if (disposed) return;
+
     // free(palette);
     free(pixels);
     spng_ctx_free(spngctx);
+
+    disposed = true;
 }

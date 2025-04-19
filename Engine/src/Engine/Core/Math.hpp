@@ -4,6 +4,12 @@ namespace Soulcast
 {
 	#define PI (3.1415927f)
 
+	#define INT_TO_VOID(x) (void *)(size_t)(x)
+	#define VOID_TO_INT(x) (int32)(size_t)(x)
+
+	#define TO_FIXED(x)   ((x) << 16)
+	#define FROM_FIXED(x) ((x) >> 16)
+
 	enum class Endian
 	{
 		Little,
