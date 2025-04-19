@@ -11,8 +11,10 @@ namespace Soulcast
 
 		int32 width = 0;
 		int32 height = 0;
-		uint16 palette[PALETTE_BANK_SIZE];
+		PaletteEntry palette[PALETTE_BANK_SIZE];
 		uint8* pixels = nullptr;
+		size_t bpp = 0;
+		size_t pitch = 0;
 
 	private:
 		spng_ctx* spngctx = nullptr;

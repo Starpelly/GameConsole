@@ -59,7 +59,6 @@ target_include_directories(SoulcastEngine PRIVATE ${SOULCAST_ENGINE_VENDOR_DIR}/
 
 target_link_libraries(SoulcastEngine PRIVATE spng)
 
-
 #--------------------------------------------------------------------
 # Folder structuring in Visual Studio
 #--------------------------------------------------------------------

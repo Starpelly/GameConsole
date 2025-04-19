@@ -43,6 +43,7 @@ using float64 = double;
 	#define COMPILER_UNKNOWN
 #endif
 
+		/*
 #if defined(COMPILER_CLANG) || defined(COMPILER_GCC)
 	#define noinline   __attribute__((noinline))
 	#define alwaysinline  inline __attribute__((always_inline))
@@ -53,6 +54,7 @@ using float64 = double;
 	#define noinline
 	#define alwaysinline  inline
 #endif
+*/
 
 #define SOULCAST_WIN	 (0)
 #define SOULCAST_LINUX	 (1)

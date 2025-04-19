@@ -4,6 +4,36 @@
 
 using namespace Soulcast;
 
+size_t getBytesPerPixel(const spng_ihdr* ihdr)
+{
+    int channels;
+
+    switch (ihdr->color_type)
+    {
+    case SPNG_COLOR_TYPE_GRAYSCALE:
+    case SPNG_COLOR_TYPE_INDEXED:
+        channels = 1; // Grayscale or Indexed (1 channel)
+        break;
+    case SPNG_COLOR_TYPE_TRUECOLOR:
+        channels = 3; // RGB (3 channels)
+        break;
+    case SPNG_COLOR_TYPE_GRAYSCALE_ALPHA:
+        channels = 2; // Grayscale + Alpha (2 channels)
+        break;
+    case SPNG_COLOR_TYPE_TRUECOLOR_ALPHA:
+        channels = 4; // RGBA (4 channels)
+        break;
+    default:
+        return 0; // Invalid color type
+    }
+
+    // Calculate bits per pixel
+    int bits_per_pixel = channels * ihdr->bit_depth;
+
+    // Convert to bytes per pixel
+    return (size_t)(bits_per_pixel + 7) / 8; // Add 7 and divide to round up
+}
+
 Image::Image(const char* fileName)
 {
     FILE* png_file = fopen(fileName, "rb");
@@ -57,7 +87,7 @@ Image::Image(const char* fileName)
     for (int i = 0; i < plte.n_entries; i++)
     {
         auto entry = plte.entries[i];
-        palette[i] = RGB888_TO_RGB565(entry.red, entry.green, entry.blue);
+        palette[i] = PaletteEntry(entry.red, entry.green, entry.blue);
     }
 
     // Allocate memory for raw image data
@@ -96,9 +126,8 @@ Image::Image(const char* fileName)
     width = ihdr.width;
     height = ihdr.height;
 
-    // m_BPP = getBytesPerPixel(&ihdr);
-    // m_Pitch = m_Width * m_BPP;
-
+    bpp = getBytesPerPixel(&ihdr);
+    pitch = width * bpp;
     // m_ColorFormat = (ColorFormat)ihdr.color_type;
 }
 

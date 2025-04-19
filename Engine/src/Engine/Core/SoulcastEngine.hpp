@@ -62,6 +62,8 @@ enum SoulcastStates
 
 #include "Engine/Input/Input.hpp"
 
+#include "Engine/Scene/Scene.hpp"
+
 namespace Soulcast
 {
 	class SOULCAST_API SoulcastEngine

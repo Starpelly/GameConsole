@@ -21,8 +21,11 @@ Image* testImage2;
 
 TestGame::TestGame()
 {
-	testImage1 = new Image("Sprites/Sonic.png");
-	testImage2 = new Image("Sprites/SonicBG.png");
+	testImage1 = new Image("Sprites/switch.png");
+	testImage2 = new Image("Sprites/palacebg.png");
+
+	Palette::LoadPaletteBank(0, "Palettes/switch.pal");
+	Palette::LoadPaletteBank(1, "Palettes/palacebg.pal");
 }
 
 TestGame::~TestGame()
@@ -94,7 +97,7 @@ void TestGame::Update()
 	auto mousePan = Math::lerp(-1, 1, ((float)Input::mouseX) / (SCREEN_XSIZE * Engine.windowScale));
 	auto mouseFreq = -(Input::mouseY - (SCREEN_YSIZE * Engine.windowScale));
 	AudioDevice::SetPCMFreq(mouseFreq);
-	AudioDevice::SetPCMPan(mousePan);
+	AudioDevice::SetPCMPan(0.0f);
 }
 
 const int rx = SCREEN_XSIZE / 2;
@@ -123,14 +126,21 @@ void TestGame::Render()
 		}
 	}
 
-	// Drawing::DrawRectangle(32, -(player1.freq - (SCREEN_YSIZE / Engine.windowScale)), 8, 8, currentPlayer == &player1 ? 3 : 2);
-	// Drawing::DrawRectangle(128, -player2.freq, 8, 8, currentPlayer == &player2 ? 3 : 2);
-
-	// Palette::SetPaletteColor(3, PaletteEntry(188, 100, 93));
-
-	Drawing::DrawSprite(testImage2, x * 0.4f, y);
+	Palette::SetActivePalette(1);
+	Drawing::DrawBackground(testImage2, x * 0.3f, y + 192);
 	
+	Palette::SetActivePalette(0);
+	Drawing::DrawBackground(testImage1, x, y + 184);
+
 	Drawing::ApplyMosaicEffect(mosaic);
-	
-	Drawing::DrawSprite(testImage1, x, y);
+}
+
+void PlayerEntity::Update()
+{
+
+}
+
+void PlayerEntity::Render()
+{
+
 }

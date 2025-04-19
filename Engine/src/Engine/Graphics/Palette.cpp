@@ -10,8 +10,8 @@ using namespace Soulcast;
 
 namespace Soulcast
 {
-    PaletteBank fullPalette;
-    PaletteEntry* activePalette = fullPalette;
+    PaletteEntry fullPalette[PALETTE_BANK_COUNT][PALETTE_BANK_SIZE];
+    PaletteEntry* activePalette = fullPalette[0];
 }
 
 static std::vector<PaletteEntry> LoadJASCPalette(const std::string& filename)
@@ -57,49 +57,54 @@ static std::vector<PaletteEntry> LoadJASCPalette(const std::string& filename)
     return palette;
 }
 
-void Palette::LoadPaletteBank(PaletteEntry* out, const char* filePath)
+void Palette::LoadPaletteBank(uint8 bank, const char* filePath)
 {
 	auto parsedColors = LoadJASCPalette(filePath);
 
 	for (int32 i = 0; i < PALETTE_BANK_SIZE; i++)
 	{
         if (i >= parsedColors.size())
-            out[i] = PaletteEntry(0, 0, 0);
+            fullPalette[bank][i] = PaletteEntry(0, 0, 0);
         else
-		    out[i] = parsedColors[i];
+            fullPalette[bank][i] = parsedColors[i];
 	}
 }
 
-void Palette::RotatePalette(uint8 startIndex, uint8 endIndex, bool right)
+void Palette::SetActivePalette(uint8 bank)
+{
+    activePalette = fullPalette[bank];
+}
+
+void Palette::RotatePalette(uint8 bank, uint8 startIndex, uint8 endIndex, bool right)
 {
     if (right)
     {
-        auto startColor = activePalette[endIndex];
+        auto startColor = fullPalette[bank][endIndex];
         for (int i = endIndex; i > startIndex; --i)
         {
-            activePalette[i] = activePalette[i - 1];
+            fullPalette[bank][i] = fullPalette[bank][i - 1];
         }
-        activePalette[startIndex] = startColor;
+        fullPalette[bank][startIndex] = startColor;
     }
     else
     {
-        auto startColor = activePalette[startIndex];
+        auto startColor = fullPalette[bank][startIndex];
         for (int i = startIndex; i < endIndex; ++i)
         {
-            activePalette[i] = activePalette[i + 1];
+            fullPalette[bank][i] = fullPalette[bank][i + 1];
         }
-        activePalette[endIndex] = startColor;
+        fullPalette[bank][endIndex] = startColor;
     }
 }
 
-void Palette::RotatePaletteRel(uint8 startIndex, uint8 count, bool right)
+void Palette::RotatePaletteRel(uint8 bank, uint8 startIndex, uint8 count, bool right)
 {
-    RotatePalette(startIndex, startIndex + count - 1, right);
+    RotatePalette(bank, startIndex, startIndex + count - 1, right);
 }
 
-void Palette::SetPaletteColor(uint8 index, PaletteEntry color)
+void Palette::SetPaletteColor(uint8 bank, uint8 index, PaletteEntry color)
 {
-    activePalette[index] = color;
+    fullPalette[bank][index] = color;
 }
 
 void Palette::CopyPalette(uint8 src, uint8 dest)

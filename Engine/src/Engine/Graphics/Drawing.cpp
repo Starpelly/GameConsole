@@ -26,8 +26,6 @@ void Drawing::Init()
     currentScreen.clipBound_X2 = SCREEN_XSIZE;
     currentScreen.clipBound_Y1 = 0;
     currentScreen.clipBound_Y2 = SCREEN_YSIZE;
-
-    Palette::LoadPaletteBank(activePalette, "Palettes/sonic.pal");
 }
 
 void Drawing::Release()
@@ -330,8 +328,92 @@ void Drawing::DrawLine(int32 x1, int32 y1, int32 x2, int32 y2, uint8 color)
 	bool transparent = false; \
 	\
     uint8 paletteIndex = *indices;\
-	color = fullPalette[paletteIndex];\
+	color = fullPalette[paletteIndex].Packed();\
 	transparent = paletteIndex == 0;\
+
+void Drawing::DrawBackground(Image* image, int32 x, int32 y)
+{
+    const int32 hstart = x;
+    const int32 vstart = y;
+
+    auto* texture = image;
+
+    // These need to be casted to signed integers because we need negative numbers to wrap properly.
+    const auto bitmapWidth = (int32)texture->width;
+    const auto bitmapHeight = (int32)texture->height;
+
+    auto drawWidth = bitmapWidth;
+    auto drawHeight = bitmapHeight;
+
+    if (drawWidth > currentScreen.clipBound_X2)
+        drawWidth = currentScreen.clipBound_X2;
+
+    if (drawHeight > currentScreen.clipBound_Y2)
+        drawHeight = currentScreen.clipBound_Y2;
+
+    if (drawWidth <= 0 || drawHeight <= 0)
+        return;
+
+    // Wrapping
+    int32 sprX = hstart % bitmapWidth;
+    int32 sprY = vstart % bitmapHeight;
+    if (sprX < 0)
+        sprX += bitmapWidth;
+    if (sprY < 0)
+        sprY += bitmapHeight;
+
+    // Pitch
+    const int32 pitch = currentScreen.pitch - drawWidth;
+    const int32 gfxPitch = bitmapWidth - drawWidth;
+
+    // Colors
+    const auto fullPalette = activePalette;
+    auto frameBuffer = &Engine.frameBuffer[0];
+
+    // Blitting/painting
+    int nscan = 0;
+    auto h = drawHeight;
+    while (h--)
+    {
+        const int32 tx1 = 0;
+        const int32 tx2 = currentScreen.clipBound_X2;
+
+        const int32 ypos = (sprY + nscan) % bitmapHeight;
+        int32 xpos = (sprX + 0) % bitmapWidth;
+
+        int32 x = tx1;
+
+        while (x < tx2)
+        {
+            int32 width = bitmapWidth - xpos;
+            int32 x1 = x + width;
+            if (x1 > tx2)
+                x1 = tx2;
+            width = x1 - x;
+
+            uint16* dstPixel = (uint16*)frameBuffer;
+            uint8* srcPixel = (uint8*)(texture->pixels + (ypos)*texture->pitch + (xpos)); // palette index
+
+            int32 blitWidth = width;
+            while (blitWidth)
+            {
+                if (*srcPixel)
+                {
+                    *dstPixel = fullPalette[*srcPixel].Packed();
+                }
+                srcPixel += 1;
+                dstPixel++;
+                blitWidth--;
+            }
+
+            x += width;
+            frameBuffer += width;
+            xpos = 0;
+        }
+
+        nscan++;
+    }
+}
 
 void Drawing::DrawSprite(Image* image, int32 x, int32 y)
 {
@@ -384,7 +466,7 @@ void Drawing::DrawSprite(Image* image, int32 x, int32 y)
     uint16* frameBuffer = &Engine.frameBuffer[x + currentScreen.pitch * y];
 
     uint8* indices = texture->pixels;
-    uint16* fullPalette = texture->palette;
+    PaletteEntry* fullPalette = activePalette;
 
     gfxPitch = surface->width - width;
 
@@ -412,21 +494,21 @@ void Drawing::ApplyMosaicEffect(int32 size)
 {
     if (size <= 1) return; // A value of 1 is visually indistinguishable
 
-    for (int y = 0; y < SCREEN_YSIZE; y += size)
+    for (int32 y = 0; y < SCREEN_YSIZE; y += size)
     {
-        for (int x = 0; x < SCREEN_XSIZE; x += size)
+        for (int32 x = 0; x < SCREEN_XSIZE; x += size)
         {
             // Sample the top-left pixel of the block
-            int topLeftIndex = y * SCREEN_XSIZE + x;
+            int32 topLeftIndex = y * SCREEN_XSIZE + x;
             uint16 color = Engine.frameBuffer[topLeftIndex];
 
             // Fill the block with the sampled pixel
-            for (int dy = 0; dy < size; ++dy)
+            for (int32 dy = 0; dy < size; ++dy)
             {
-                for (int dx = 0; dx < size; ++dx)
+                for (int32 dx = 0; dx < size; ++dx)
                 {
-                    int px = x + dx;
-                    int py = y + dy;
+                    int32 px = x + dx;
+                    int32 py = y + dy;
                     if (px < SCREEN_XSIZE && py < SCREEN_YSIZE)
                     {
                         Engine.frameBuffer[py * SCREEN_XSIZE + px] = color;
