@@ -55,7 +55,6 @@ enum SoulcastStates
 #include "Engine/Core/Platform.hpp"
 #include "Engine/Core/Stream.hpp"
 
-#include "Engine/Graphics/Animation.hpp"
 #include "Engine/Graphics/Palette.hpp"
 #include "Engine/Graphics/PPU.hpp"
 #include "Engine/Graphics/Sprite.hpp"
