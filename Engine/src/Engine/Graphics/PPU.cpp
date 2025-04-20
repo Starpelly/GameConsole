@@ -4,40 +4,64 @@ using namespace Soulcast;
 
 int GFX_LINESIZE;
 
-struct ScreenInfo
-{
-    Vector2 position;
-    int32 pitch;
-    int32 clipBound_X1;
-    int32 clipBound_Y1;
-    int32 clipBound_X2;
-    int32 clipBound_Y2;
-};
-
-ScreenInfo currentScreen;
 bool screenRelative = false;
 
 #define PALETTE_ENTRY_TO_RGB565(entry) \
-    RGB888_TO_RGB565(activePalette[entry].r, activePalette[entry].g, activePalette[entry].b);
+    RGB888_TO_RGB565(activePalette[entry].r, activePalette[entry].g, activePalette[entry].b)
 
-uint16* PPU::frameBuffer;
+// uint16* PPU::frameBuffer;
+// uint16* PPU::debugFrameBuffer;
+
+ScreenInfo PPU::gameScreen;
+ScreenInfo PPU::debugScreen;
+
+ScreenInfo* activeScreen;
+
+static void initScreenInfo(ScreenInfo* screen, int32 width, int32 height)
+{
+    screen->size.x = width;
+    screen->size.y = height;
+
+    screen->frameBuffer = new uint16[screen->size.x * screen->size.y];
+    memset(screen->frameBuffer, 0, (screen->size.x * screen->size.y) * sizeof(uint16));
+
+    screen->pitch = screen->size.x;
+
+    screen->clipBound_X1 = 0;
+    screen->clipBound_X2 = screen->size.x;
+    screen->clipBound_Y1 = 0;
+    screen->clipBound_Y2 = screen->size.y;
+}
 
 void PPU::Init()
 {
-    PPU::frameBuffer = new uint16[SCREEN_XSIZE * SCREEN_YSIZE];
-    memset(PPU::frameBuffer, 0, (SCREEN_XSIZE * SCREEN_YSIZE) * sizeof(uint16));
+    // Game screen
+    {
+        initScreenInfo(&PPU::gameScreen, SCREEN_XSIZE, SCREEN_YSIZE);
+    }
 
-    currentScreen.pitch = SCREEN_XSIZE;
-
-    currentScreen.clipBound_X1 = 0;
-    currentScreen.clipBound_X2 = SCREEN_XSIZE;
-    currentScreen.clipBound_Y1 = 0;
-    currentScreen.clipBound_Y2 = SCREEN_YSIZE;
+    // Debug screen
+    if (Engine.debugMode)
+    {
+        initScreenInfo(&PPU::debugScreen, DEBUG_XSIZE, SCREEN_YSIZE);
+    }
+    
+    // Active screen is the game screen by default
+    activeScreen = &PPU::gameScreen;
 }
 
 void PPU::Release()
 {
-    free(PPU::frameBuffer);
+    if (Engine.debugMode)
+    {
+        free(PPU::debugScreen.frameBuffer);
+    }
+    free(PPU::gameScreen.frameBuffer);
+}
+
+void PPU::SetActiveScreen(ScreenInfo* screen)
+{
+    activeScreen = screen;
 }
 
 void PPU::Present()
@@ -49,28 +73,98 @@ void PPU::Present()
     destScreenPos.w = SCREEN_XSIZE;
     destScreenPos.h = SCREEN_YSIZE;
 
+    if (Engine.debugMode)
+    {
+        destScreenPos.w = SCREEN_XSIZE * Engine.windowScale;
+        destScreenPos.h = SCREEN_YSIZE * Engine.windowScale;
+    }
+
     // Update screen buffer
     {
-        SDL_UpdateTexture(Engine.screenBuffer, NULL, (void*)PPU::frameBuffer, SCREEN_XSIZE * sizeof(uint16));
+        SDL_UpdateTexture(Engine.screenBuffer, NULL, (void*)PPU::gameScreen.frameBuffer, SCREEN_XSIZE * sizeof(uint16));
+
+        if (Engine.debugMode)
+        {
+            SDL_UpdateTexture(Engine.dbScreenBuffer, NULL, (void*)PPU::debugScreen.frameBuffer, DEBUG_XSIZE * sizeof(uint16));
+        }
     }
 
-    // Actually render that shit to the screen
+    // Clear screen
+    SDL_SetRenderDrawColor(Engine.renderer, 0, 0, 0, 255);
+    SDL_RenderClear(Engine.renderer);
+
+    // Actually render the game to the screen
     {
-        SDL_SetRenderDrawColor(Engine.renderer, 0, 0, 0, 255);
-        SDL_RenderClear(Engine.renderer);
-
         SDL_RenderTexture(Engine.renderer, Engine.screenBuffer, NULL, &destScreenPos);
-
-        SDL_RenderPresent(Engine.renderer);
     }
+    // Render debug stuff
+    if (Engine.debugMode)
+    {
+        const float screenScale = Engine.windowScale;
+
+        const float debugX = (SCREEN_XSIZE)*screenScale;
+        const float debugWidth = (DEBUG_XSIZE)*screenScale;
+        const float debugHeight = (SCREEN_YSIZE)*screenScale;
+        auto debugRect = CLITERAL(SDL_FRect) { debugX, 0, debugWidth, debugHeight };
+
+        SDL_RenderTexture(Engine.renderer, Engine.dbScreenBuffer, NULL, &debugRect);
+    }
+
+    SDL_RenderPresent(Engine.renderer);
 #endif
 }
 
-void PPU::ClearScreen(uint8 colIndex)
+void PPU::RenderPalette(int32 bank)
 {
-    uint16 color = PALETTE_ENTRY_TO_RGB565(colIndex);
-    auto* frameBuffer = PPU::frameBuffer;
-    int32 cnt = SCREEN_XSIZE * SCREEN_YSIZE;
+    ClearScreen(RGB888_TO_RGB565(0, 8, 133));
+
+    const int32 windowPadding = 4;
+    const int32 swatchPadding = 0;
+
+    const int32 swatchSize = 4;
+    const int32 swatchSpacing = 0;
+
+    const int32 width = DEBUG_XSIZE - (windowPadding * 2);
+    const int32 rectsPerLine = width / (swatchSize + swatchSpacing);
+    int32 height = 0;
+    for (int i = 0; i < PALETTE_BANK_SIZE; i++)
+    {
+        if ((i) % rectsPerLine == 0)
+        {
+            height += swatchSize + swatchSpacing;
+        }
+    }
+
+    int32 rectX = 0;
+    int32 rectY = 0;
+    
+    // Background
+    // DrawRectangle(windowPadding, windowPadding, width + swatchPadding, height + swatchPadding, RGB888_TO_RGB565(25, 25, 25));
+
+    // Actually draw swatches
+    Palette::SetActivePalette(bank);
+    for (int32 i = 0; i < PALETTE_BANK_SIZE; i++)
+    {
+        if (i != 0) // 0 is transparent
+        {
+            DrawRectangle(rectX + (windowPadding + swatchPadding), rectY + (windowPadding + swatchPadding), swatchSize, swatchSize, PALETTE_ENTRY_TO_RGB565(i));
+        }
+
+        rectX += swatchSize + swatchSpacing;
+
+        if ((i + 1) % rectsPerLine == 0)
+        {
+            rectX = 0;
+            rectY += swatchSize + swatchSpacing;
+        }
+    }
+}
+
+void PPU::ClearScreen(uint16 color)
+{
+    // uint16 color = PALETTE_ENTRY_TO_RGB565(colIndex);
+    auto* frameBuffer = activeScreen->frameBuffer;
+    int32 cnt = activeScreen->size.x * activeScreen->size.y;
     while (cnt--)
     {
         *frameBuffer = color;
@@ -80,57 +174,59 @@ void PPU::ClearScreen(uint8 colIndex)
 
 uint16 PPU::GetPixel(int32 x, int32 y)
 {
-    if (x < currentScreen.clipBound_X1 || y < currentScreen.clipBound_Y1 || x >= currentScreen.clipBound_X2 || y >= currentScreen.clipBound_Y2) return 0;
-    return PPU::frameBuffer[x + y * currentScreen.pitch];
+    if (x < activeScreen->clipBound_X1 || y < activeScreen->clipBound_Y1 || x >= activeScreen->clipBound_X2 || y >= activeScreen->clipBound_Y2) return 0;
+    return activeScreen->frameBuffer[x + y * activeScreen->pitch];
 }
 
 void PPU::SetPixel(int32 x, int32 y, uint8 color)
 {
-    if (x < currentScreen.clipBound_X1 || y < currentScreen.clipBound_Y1 || x >= currentScreen.clipBound_X2 || y >= currentScreen.clipBound_Y2) return;
-    PPU::frameBuffer[x + y * currentScreen.pitch] = PALETTE_ENTRY_TO_RGB565(color);
+    if (x < activeScreen->clipBound_X1 || y < activeScreen->clipBound_Y1 || x >= activeScreen->clipBound_X2 || y >= activeScreen->clipBound_Y2) return;
+    activeScreen->frameBuffer[x + y * activeScreen->pitch] = PALETTE_ENTRY_TO_RGB565(color);
 }
 
 Vector2 PPU::GetScreenPosition()
 {
-    return currentScreen.position;
+    return activeScreen->position;
 }
 
 void PPU::SetScreenPosition(int32 x, int32 y)
 {
-    currentScreen.position = { x, y };
+    activeScreen->position = { x, y };
 }
 
-void PPU::DrawRectangle(int32 x, int32 y, int32 width, int32 height, uint8 colIndex)
+void PPU::DrawRectangle(int32 x, int32 y, int32 width, int32 height, uint16 color)
 {
-    uint16 color16 = PALETTE_ENTRY_TO_RGB565(colIndex);
+    // uint16 color16 = PALETTE_ENTRY_TO_RGB565(colIndex);
+    // uint16 color16 = RGB888_TO_RGB565(color.r, color.g, color.b);
+    uint16 color16 = color;
 
-    if (width + x > currentScreen.clipBound_X2)
+    if (width + x > activeScreen->clipBound_X2)
     {
-        width = currentScreen.clipBound_X2 - x;
+        width = activeScreen->clipBound_X2 - x;
     }
 
-    if (x < currentScreen.clipBound_X1)
+    if (x < activeScreen->clipBound_X1)
     {
-        width += x - currentScreen.clipBound_X1;
-        x = currentScreen.clipBound_X1;
+        width += x - activeScreen->clipBound_X1;
+        x = activeScreen->clipBound_X1;
     }
 
-    if (height + y > currentScreen.clipBound_Y2)
+    if (height + y > activeScreen->clipBound_Y2)
     {
-        height = currentScreen.clipBound_Y2 - y;
+        height = activeScreen->clipBound_Y2 - y;
     }
 
-    if (y < currentScreen.clipBound_Y1)
+    if (y < activeScreen->clipBound_Y1)
     {
-        height += y - currentScreen.clipBound_Y1;
-        y = currentScreen.clipBound_Y1;
+        height += y - activeScreen->clipBound_Y1;
+        y = activeScreen->clipBound_Y1;
     }
 
     if (width <= 0 || height <= 0)
         return;
 
-    int32 pitch = currentScreen.pitch - width;
-    uint16* frameBuffer = &PPU::frameBuffer[x + (y * currentScreen.pitch)];
+    int32 pitch = activeScreen->pitch - width;
+    uint16* frameBuffer = &activeScreen->frameBuffer[x + (y * activeScreen->pitch)];
 
     int32 h = height;
     while (h--)
@@ -146,14 +242,11 @@ void PPU::DrawRectangle(int32 x, int32 y, int32 width, int32 height, uint8 colIn
     }
 }
 
-void PPU::DrawCircle(int32 x, int32 y, int32 radius, uint8 color)
+void PPU::DrawLine(int32 x1, int32 y1, int32 x2, int32 y2, uint16 color)
 {
-    if (radius <= 0) return;
-}
-
-void PPU::DrawLine(int32 x1, int32 y1, int32 x2, int32 y2, uint8 color)
-{
-    uint16 color16 = PALETTE_ENTRY_TO_RGB565(color);
+    // uint16 color16 = PALETTE_ENTRY_TO_RGB565(color);
+    // uint16 color16 = RGB888_TO_RGB565(color.r, color.g, color.b);
+    uint16 color16 = color;
 
     int32 drawY1 = y1;
     int32 drawX1 = x1;
@@ -161,25 +254,25 @@ void PPU::DrawLine(int32 x1, int32 y1, int32 x2, int32 y2, uint8 color)
     int32 drawX2 = x2;
 
     int32 flags1 = 0;
-    if (drawX1 >= currentScreen.clipBound_X2)
+    if (drawX1 >= activeScreen->clipBound_X2)
         flags1 = 2;
-    else if (drawX1 < currentScreen.clipBound_X1)
+    else if (drawX1 < activeScreen->clipBound_X1)
         flags1 = 1;
 
-    if (drawY1 >= currentScreen.clipBound_Y2)
+    if (drawY1 >= activeScreen->clipBound_Y2)
         flags1 |= 8;
-    else if (drawY1 < currentScreen.clipBound_Y1)
+    else if (drawY1 < activeScreen->clipBound_Y1)
         flags1 |= 4;
 
     int32 flags2 = 0;
-    if (drawX2 >= currentScreen.clipBound_X2)
+    if (drawX2 >= activeScreen->clipBound_X2)
         flags2 = 2;
-    else if (drawX2 < currentScreen.clipBound_X1)
+    else if (drawX2 < activeScreen->clipBound_X1)
         flags2 = 1;
 
-    if (drawY2 >= currentScreen.clipBound_Y2)
+    if (drawY2 >= activeScreen->clipBound_Y2)
         flags2 |= 8;
-    else if (drawY2 < currentScreen.clipBound_Y1)
+    else if (drawY2 < activeScreen->clipBound_Y1)
         flags2 |= 4;
 
     while (flags1 || flags2) {
@@ -196,46 +289,46 @@ void PPU::DrawLine(int32 x1, int32 y1, int32 x2, int32 y2, uint8 color)
             int32 div = (drawY2 - drawY1);
             if (!div)
                 div = 1;
-            x = drawX1 + ((drawX2 - drawX1) * (((currentScreen.clipBound_Y2 - drawY1) << 8) / div) >> 8);
-            y = currentScreen.clipBound_Y2;
+            x = drawX1 + ((drawX2 - drawX1) * (((activeScreen->clipBound_Y2 - drawY1) << 8) / div) >> 8);
+            y = activeScreen->clipBound_Y2;
         }
         else if (curFlags & 4) {
             int32 div = (drawY2 - drawY1);
             if (!div)
                 div = 1;
-            x = drawX1 + ((drawX2 - drawX1) * (((currentScreen.clipBound_Y1 - drawY1) << 8) / div) >> 8);
-            y = currentScreen.clipBound_Y1;
+            x = drawX1 + ((drawX2 - drawX1) * (((activeScreen->clipBound_Y1 - drawY1) << 8) / div) >> 8);
+            y = activeScreen->clipBound_Y1;
         }
         else if (curFlags & 2) {
             int32 div = (drawX2 - drawX1);
             if (!div)
                 div = 1;
-            x = currentScreen.clipBound_X2;
-            y = drawY1 + ((drawY2 - drawY1) * (((currentScreen.clipBound_X2 - drawX1) << 8) / div) >> 8);
+            x = activeScreen->clipBound_X2;
+            y = drawY1 + ((drawY2 - drawY1) * (((activeScreen->clipBound_X2 - drawX1) << 8) / div) >> 8);
         }
         else if (curFlags & 1) {
             int32 div = (drawX2 - drawX1);
             if (!div)
                 div = 1;
-            x = currentScreen.clipBound_X1;
-            y = drawY1 + ((drawY2 - drawY1) * (((currentScreen.clipBound_X1 - drawX1) << 8) / div) >> 8);
+            x = activeScreen->clipBound_X1;
+            y = drawY1 + ((drawY2 - drawY1) * (((activeScreen->clipBound_X1 - drawX1) << 8) / div) >> 8);
         }
 
         if (curFlags == flags1) {
             drawX1 = x;
             drawY1 = y;
             flags1 = 0;
-            if (x > currentScreen.clipBound_X2) {
+            if (x > activeScreen->clipBound_X2) {
                 flags1 = 2;
             }
-            else if (x < currentScreen.clipBound_X1) {
+            else if (x < activeScreen->clipBound_X1) {
                 flags1 = 1;
             }
 
-            if (y < currentScreen.clipBound_Y1) {
+            if (y < activeScreen->clipBound_Y1) {
                 flags1 |= 4;
             }
-            else if (y > currentScreen.clipBound_Y2) {
+            else if (y > activeScreen->clipBound_Y2) {
                 flags1 |= 8;
             }
         }
@@ -243,41 +336,41 @@ void PPU::DrawLine(int32 x1, int32 y1, int32 x2, int32 y2, uint8 color)
             drawX2 = x;
             drawY2 = y;
             flags2 = 0;
-            if (x > currentScreen.clipBound_X2) {
+            if (x > activeScreen->clipBound_X2) {
                 flags2 = 2;
             }
-            else if (x < currentScreen.clipBound_X1) {
+            else if (x < activeScreen->clipBound_X1) {
                 flags2 = 1;
             }
 
-            if (y < currentScreen.clipBound_Y1) {
+            if (y < activeScreen->clipBound_Y1) {
                 flags2 |= 4;
             }
-            else if (y > currentScreen.clipBound_Y2) {
+            else if (y > activeScreen->clipBound_Y2) {
                 flags2 |= 8;
             }
         }
     }
 
-    if (drawX1 > currentScreen.clipBound_X2)
-        drawX1 = currentScreen.clipBound_X2;
-    else if (drawX1 < currentScreen.clipBound_X1)
-        drawX1 = currentScreen.clipBound_X1;
+    if (drawX1 > activeScreen->clipBound_X2)
+        drawX1 = activeScreen->clipBound_X2;
+    else if (drawX1 < activeScreen->clipBound_X1)
+        drawX1 = activeScreen->clipBound_X1;
 
-    if (drawY1 > currentScreen.clipBound_Y2)
-        drawY1 = currentScreen.clipBound_Y2;
-    else if (drawY1 < currentScreen.clipBound_Y1)
-        drawY1 = currentScreen.clipBound_Y1;
+    if (drawY1 > activeScreen->clipBound_Y2)
+        drawY1 = activeScreen->clipBound_Y2;
+    else if (drawY1 < activeScreen->clipBound_Y1)
+        drawY1 = activeScreen->clipBound_Y1;
 
-    if (drawX2 > currentScreen.clipBound_X2)
-        drawX2 = currentScreen.clipBound_X2;
-    else if (drawX2 < currentScreen.clipBound_X1)
-        drawX2 = currentScreen.clipBound_X1;
+    if (drawX2 > activeScreen->clipBound_X2)
+        drawX2 = activeScreen->clipBound_X2;
+    else if (drawX2 < activeScreen->clipBound_X1)
+        drawX2 = activeScreen->clipBound_X1;
 
-    if (drawY2 > currentScreen.clipBound_Y2)
-        drawY2 = currentScreen.clipBound_Y2;
-    else if (drawY2 < currentScreen.clipBound_Y1)
-        drawY2 = currentScreen.clipBound_Y1;
+    if (drawY2 > activeScreen->clipBound_Y2)
+        drawY2 = activeScreen->clipBound_Y2;
+    else if (drawY2 < activeScreen->clipBound_Y1)
+        drawY2 = activeScreen->clipBound_Y1;
 
     int32 sizeX = abs(drawX2 - drawX1);
     int32 sizeY = abs(drawY2 - drawY1);
@@ -296,7 +389,7 @@ void PPU::DrawLine(int32 x1, int32 y1, int32 x2, int32 y2, uint8 color)
         drawY2 = v;
     }
 
-    uint16* frameBuffer = &PPU::frameBuffer[drawX1 + (drawY1 * currentScreen.pitch)];
+    uint16* frameBuffer = &activeScreen->frameBuffer[drawX1 + (drawY1 * activeScreen->pitch)];
 
     if (drawY1 > drawY2) {
         while (drawX1 < drawX2 || drawY1 >= drawY2) {
@@ -311,7 +404,7 @@ void PPU::DrawLine(int32 x1, int32 y1, int32 x2, int32 y2, uint8 color)
             if (hSize < max) {
                 --drawY1;
                 hSize += sizeX;
-                frameBuffer -= currentScreen.pitch;
+                frameBuffer -= activeScreen->pitch;
             }
         }
     }
@@ -329,7 +422,7 @@ void PPU::DrawLine(int32 x1, int32 y1, int32 x2, int32 y2, uint8 color)
                 if (hSize < max) {
                     hSize += sizeX;
                     ++drawY1;
-                    frameBuffer += currentScreen.pitch;
+                    frameBuffer += activeScreen->pitch;
                 }
             }
             else {
@@ -360,15 +453,15 @@ void PPU::DrawBackground(Image* image, int32 x, int32 y)
 
     if (!screenRelative)
     {
-        x -= currentScreen.position.x;
-        y -= currentScreen.position.y;
+        x -= activeScreen->position.x;
+        y -= activeScreen->position.y;
     }
 
-    if (drawWidth > currentScreen.clipBound_X2)
-        drawWidth = currentScreen.clipBound_X2;
+    if (drawWidth > activeScreen->clipBound_X2)
+        drawWidth = activeScreen->clipBound_X2;
 
-    if (drawHeight > currentScreen.clipBound_Y2)
-        drawHeight = currentScreen.clipBound_Y2;
+    if (drawHeight > activeScreen->clipBound_Y2)
+        drawHeight = activeScreen->clipBound_Y2;
 
     if (drawWidth <= 0 || drawHeight <= 0)
         return;
@@ -385,12 +478,12 @@ void PPU::DrawBackground(Image* image, int32 x, int32 y)
         sprY += bitmapHeight;
 
     // Pitch
-    const int32 pitch = currentScreen.pitch - drawWidth;
+    const int32 pitch = activeScreen->pitch - drawWidth;
     const int32 gfxPitch = bitmapWidth - drawWidth;
 
     // Colors
     const auto fullPalette = activePalette;
-    auto frameBuffer = &PPU::frameBuffer[0];
+    auto frameBuffer = &activeScreen->frameBuffer[0];
 
     // Blitting/painting
     int nscan = 0;
@@ -398,7 +491,7 @@ void PPU::DrawBackground(Image* image, int32 x, int32 y)
     while (h--)
     {
         const int32 tx1 = 0;
-        const int32 tx2 = currentScreen.clipBound_X2;
+        const int32 tx2 = activeScreen->clipBound_X2;
 
         const int32 ypos = (sprY + nscan) % bitmapHeight;
         int32 xpos = (sprX + 0) % bitmapWidth;
@@ -443,8 +536,8 @@ void PPU::DrawSprite(Sprite* sprite, int32 x, int32 y)
 
     if (!screenRelative)
     {
-        x += currentScreen.position.x;
-        y += currentScreen.position.y;
+        x += activeScreen->position.x;
+        y += activeScreen->position.y;
     }
 
     auto* texture = sprite->image;
@@ -460,26 +553,26 @@ void PPU::DrawSprite(Sprite* sprite, int32 x, int32 y)
     int widthFlip = width;
     int heightFlip = height;
 
-    if (width + x > currentScreen.clipBound_X2)
-        width = currentScreen.clipBound_X2 - x;
+    if (width + x > activeScreen->clipBound_X2)
+        width = activeScreen->clipBound_X2 - x;
 
-    if (x < currentScreen.clipBound_X1) {
-        int32 val = x - currentScreen.clipBound_X1;
+    if (x < activeScreen->clipBound_X1) {
+        int32 val = x - activeScreen->clipBound_X1;
         sprX -= val;
         width += val;
         widthFlip += 2 * val;
-        x = currentScreen.clipBound_X1;
+        x = activeScreen->clipBound_X1;
     }
 
-    if (height + y > currentScreen.clipBound_Y2)
-        height = currentScreen.clipBound_Y2 - y;
+    if (height + y > activeScreen->clipBound_Y2)
+        height = activeScreen->clipBound_Y2 - y;
 
-    if (y < currentScreen.clipBound_Y1) {
-        int32 val = y - currentScreen.clipBound_Y1;
+    if (y < activeScreen->clipBound_Y1) {
+        int32 val = y - activeScreen->clipBound_Y1;
         sprY -= val;
         height += val;
         heightFlip += 2 * val;
-        y = currentScreen.clipBound_Y1;
+        y = activeScreen->clipBound_Y1;
     }
 
     if (width <= 0 || height <= 0)
@@ -487,10 +580,10 @@ void PPU::DrawSprite(Sprite* sprite, int32 x, int32 y)
 
     auto surface = texture;
 
-    int32 pitch = currentScreen.pitch - width;
+    int32 pitch = activeScreen->pitch - width;
     int32 gfxPitch = 0;
     uint8* lineBuffer = NULL;
-    uint16* frameBuffer = &PPU::frameBuffer[x + currentScreen.pitch * y];
+    uint16* frameBuffer = &activeScreen->frameBuffer[x + activeScreen->pitch * y];
 
     uint8* indices = texture->pixels;
     PaletteEntry* fullPalette = activePalette;
@@ -527,7 +620,7 @@ void PPU::ApplyMosaicEffect(int32 size)
         {
             // Sample the top-left pixel of the block
             int32 topLeftIndex = y * SCREEN_XSIZE + x;
-            uint16 color = PPU::frameBuffer[topLeftIndex];
+            uint16 color = activeScreen->frameBuffer[topLeftIndex];
 
             // Fill the block with the sampled pixel
             for (int32 dy = 0; dy < size; ++dy)
@@ -538,7 +631,7 @@ void PPU::ApplyMosaicEffect(int32 size)
                     int32 py = y + dy;
                     if (px < SCREEN_XSIZE && py < SCREEN_YSIZE)
                     {
-                        PPU::frameBuffer[py * SCREEN_XSIZE + px] = color;
+                        activeScreen->frameBuffer[py * SCREEN_XSIZE + px] = color;
                     }
                 }
             }

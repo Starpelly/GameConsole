@@ -47,7 +47,15 @@ bool SoulcastEngine::Init()
 
 	flags |= SDL_WINDOW_RESIZABLE;
 
-	Engine.window = SDL_CreateWindow("Soulcast", SCREEN_XSIZE * Engine.windowScale, SCREEN_YSIZE * Engine.windowScale, SDL_WINDOW_HIGH_PIXEL_DENSITY | flags);
+	int32 windowWidth = SCREEN_XSIZE * Engine.windowScale;
+	int32 windowHeight = SCREEN_YSIZE * Engine.windowScale;
+
+	if (Engine.debugMode)
+	{
+		windowWidth += DEBUG_XSIZE * Engine.windowScale;
+	}
+
+	Engine.window = SDL_CreateWindow("Soulcast", windowWidth, windowHeight, SDL_WINDOW_HIGH_PIXEL_DENSITY | flags);
 
 	if (!Engine.window)
 	{
@@ -64,16 +72,32 @@ bool SoulcastEngine::Init()
 		return 0;
 	}
 
-	SDL_SetRenderLogicalPresentation(Engine.renderer, SCREEN_XSIZE, SCREEN_YSIZE, SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
+	SDL_SetRenderLogicalPresentation(Engine.renderer, SCREEN_XSIZE, SCREEN_YSIZE, (Engine.debugMode) ? SDL_LOGICAL_PRESENTATION_DISABLED : SDL_LOGICAL_PRESENTATION_INTEGER_SCALE);
 	SDL_SetRenderDrawBlendMode(Engine.renderer, SDL_BLENDMODE_BLEND);
 
-	Engine.screenBuffer = SDL_CreateTexture(Engine.renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, SCREEN_XSIZE, SCREEN_YSIZE);
-	SDL_SetTextureScaleMode(Engine.screenBuffer, SDL_SCALEMODE_NEAREST);
-
-	if (!Engine.screenBuffer)
+	// Game screen buffer texture
 	{
-		printf("ERROR: Failed to create screen buffer!\nError Message: %s", SDL_GetError());
+		Engine.screenBuffer = SDL_CreateTexture(Engine.renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, SCREEN_XSIZE, SCREEN_YSIZE);
+		SDL_SetTextureScaleMode(Engine.screenBuffer, SDL_SCALEMODE_NEAREST);
+
+		if (!Engine.screenBuffer)
+		{
+			printf("ERROR: Failed to create screen buffer!\nError Message: %s", SDL_GetError());
+		}
 	}
+
+	// Debug screen buffer texture
+	if (Engine.debugMode)
+	{
+		Engine.dbScreenBuffer = SDL_CreateTexture(Engine.renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, DEBUG_XSIZE, SCREEN_YSIZE);
+		SDL_SetTextureScaleMode(Engine.dbScreenBuffer, SDL_SCALEMODE_NEAREST);
+
+		if (!Engine.dbScreenBuffer)
+		{
+			printf("ERROR: Failed to create screen buffer!\nError Message: %s", SDL_GetError());
+		}
+	}
+
 #endif
 
 	if (Engine.borderless)
@@ -83,6 +107,7 @@ bool SoulcastEngine::Init()
 	}
 
 	SDL_SetWindowPosition(Engine.window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
+	SDL_SetWindowResizable(Engine.window, !Engine.debugMode);
 
 	SDL_DisplayID winID = SDL_GetDisplayForWindow(Engine.window);
 	const SDL_DisplayMode* disp = SDL_GetCurrentDisplayMode(winID);
@@ -125,9 +150,27 @@ void SoulcastEngine::Run()
 
 		Engine.running = ProcessEvents();
 
+		PPU::SetActiveScreen(&PPU::gameScreen);
+
 		for (int s = 0; s < Engine.gameSpeed; ++s)
 		{
 			Input::Process();
+
+			if (Engine.debugMode)
+			{
+				if (Input::IsButtonPressed(INPUT_UP))
+				{
+					debug.palette++;
+				}
+				if (Input::IsButtonPressed(INPUT_DOWN))
+				{
+					debug.palette--;
+				}
+				if (debug.palette < 0)
+					debug.palette = 0;
+				if (debug.palette >= PALETTE_BANK_COUNT)
+					debug.palette = PALETTE_BANK_COUNT;
+			}
 
 			if (!masterPaused || Engine.frameStep)
 			{
@@ -151,6 +194,14 @@ void SoulcastEngine::Run()
 			}
 		}
 
+		// Render debug stuff (if we should)
+		if (Engine.debugMode)
+		{
+			PPU::SetActiveScreen(&PPU::debugScreen);
+			PPU::RenderPalette(debug.palette);
+		}
+
+		// Render PPU output to physical screen!
 		PPU::Present();
 
 #if SOULCAST_USING_OPENGL && SOULCAST_USING_SDL3
@@ -170,6 +221,10 @@ void SoulcastEngine::Release()
 	AudioDevice::Release();
 
 #if SOULCAST_USING_SDL3
+	if (Engine.debugMode)
+	{
+		SDL_DestroyTexture(Engine.dbScreenBuffer);
+	}
 	SDL_DestroyTexture(Engine.screenBuffer);
 	SDL_DestroyRenderer(Engine.renderer);
 	SDL_DestroyWindow(Engine.window);

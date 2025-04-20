@@ -12,6 +12,7 @@ namespace Soulcast
 {
     PaletteEntry fullPalette[PALETTE_BANK_COUNT][PALETTE_BANK_SIZE];
     PaletteEntry* activePalette = fullPalette[0];
+    uint8 activePaletteBank = 0;
 }
 
 static std::vector<PaletteEntry> LoadJASCPalette(const std::string& filename)
@@ -72,6 +73,7 @@ void Palette::LoadPaletteBank(uint8 bank, const char* filePath)
 
 void Palette::SetActivePalette(uint8 bank)
 {
+    activePaletteBank = bank;
     activePalette = fullPalette[bank];
 }
 

@@ -30,6 +30,7 @@ namespace Soulcast
 
 	extern PaletteEntry fullPalette[PALETTE_BANK_COUNT][PALETTE_BANK_SIZE];
 	extern PaletteEntry* activePalette;
+	extern uint8 activePaletteBank;
 
 	namespace Palette
 	{

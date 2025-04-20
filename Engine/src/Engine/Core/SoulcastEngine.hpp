@@ -26,8 +26,11 @@ struct Vector2
 // ===============
 // General Defines
 // ===============
-#define SCREEN_XSIZE	(320)	// 480
-#define SCREEN_YSIZE	(240)	// 270
+constexpr auto SCREEN_XSIZE		 = (320); // 480
+constexpr auto SCREEN_YSIZE		 = (240); // 270
+
+constexpr auto DEBUG_XSIZE		 = (128);
+constexpr auto SCREEN_XSIZE_WIDE = (static_cast<int>((16.0f / 9.0f) * 240));
 
 #define REFRESH_RATE	(60)
 
@@ -55,6 +58,8 @@ enum SoulcastStates
 #include "Engine/Core/Platform.hpp"
 #include "Engine/Core/Stream.hpp"
 
+#include "Engine/CPU/CPU.hpp"
+
 #include "Engine/Graphics/Palette.hpp"
 #include "Engine/Graphics/PPU.hpp"
 #include "Engine/Graphics/Sprite.hpp"
@@ -65,6 +70,11 @@ enum SoulcastStates
 
 namespace Soulcast
 {
+	struct DebugMode
+	{
+		int8 palette;
+	};
+
 	class SOULCAST_API SoulcastEngine
 	{
 	public:
@@ -78,6 +88,8 @@ namespace Soulcast
 	public:
 		bool initialized			= false;
 		bool running				= false;
+		bool debugMode				= true;
+		DebugMode debug{};
 
 		SoulcastStates mode			= ENGINE_MAINGAME;
 
@@ -100,6 +112,7 @@ namespace Soulcast
 		SDL_Window* window			= nullptr;
 		SDL_Renderer* renderer		= nullptr;
 		SDL_Texture* screenBuffer	= nullptr;
+		SDL_Texture* dbScreenBuffer	= nullptr;
 	#endif
 
 		// Audio interpolation settings pls

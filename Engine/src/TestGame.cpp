@@ -19,7 +19,6 @@ struct
 } State;
 
 static int fileTest = 0;
-static int mosaic = 1;
 
 Image testImage1;
 Image testImage2;
@@ -96,14 +95,6 @@ void TestGame::Update()
 		fileTest++;
 		loadPCMFile(fileTest);
 	}
-	if (Input::IsButtonPressed(INPUT_LEFT))
-	{
-		mosaic--;
-	}
-	if (Input::IsButtonPressed(INPUT_RIGHT))
-	{
-		mosaic++;
-	}
 
 	auto mousePan = Math::lerp(-1, 1, ((float)Input::mouseX) / (SCREEN_XSIZE * Engine.windowScale));
 	auto mouseFreq = -(Input::mouseY - (SCREEN_YSIZE * Engine.windowScale));
@@ -149,8 +140,6 @@ void TestGame::Render()
 
 	Palette::SetActivePalette(2);
 	PPU::DrawSprite(&testSprite, 64, 168);
-
-	PPU::ApplyMosaicEffect(mosaic);
 }
 
 void PlayerEntity::Update()
