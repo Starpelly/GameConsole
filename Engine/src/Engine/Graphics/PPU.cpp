@@ -20,8 +20,13 @@ bool screenRelative = false;
 #define PALETTE_ENTRY_TO_RGB565(entry) \
     RGB888_TO_RGB565(activePalette[entry].r, activePalette[entry].g, activePalette[entry].b);
 
+uint16* PPU::frameBuffer;
+
 void PPU::Init()
 {
+    PPU::frameBuffer = new uint16[SCREEN_XSIZE * SCREEN_YSIZE];
+    memset(PPU::frameBuffer, 0, (SCREEN_XSIZE * SCREEN_YSIZE) * sizeof(uint16));
+
     currentScreen.pitch = SCREEN_XSIZE;
 
     currentScreen.clipBound_X1 = 0;
@@ -32,6 +37,7 @@ void PPU::Init()
 
 void PPU::Release()
 {
+    free(PPU::frameBuffer);
 }
 
 void PPU::Present()
@@ -45,7 +51,7 @@ void PPU::Present()
 
     // Update screen buffer
     {
-        SDL_UpdateTexture(Engine.screenBuffer, NULL, (void*)Engine.frameBuffer, SCREEN_XSIZE * sizeof(uint16));
+        SDL_UpdateTexture(Engine.screenBuffer, NULL, (void*)PPU::frameBuffer, SCREEN_XSIZE * sizeof(uint16));
     }
 
     // Actually render that shit to the screen
@@ -63,7 +69,7 @@ void PPU::Present()
 void PPU::ClearScreen(uint8 colIndex)
 {
     uint16 color = PALETTE_ENTRY_TO_RGB565(colIndex);
-    auto* frameBuffer = Engine.frameBuffer;
+    auto* frameBuffer = PPU::frameBuffer;
     int32 cnt = SCREEN_XSIZE * SCREEN_YSIZE;
     while (cnt--)
     {
@@ -75,13 +81,13 @@ void PPU::ClearScreen(uint8 colIndex)
 uint16 PPU::GetPixel(int32 x, int32 y)
 {
     if (x < currentScreen.clipBound_X1 || y < currentScreen.clipBound_Y1 || x >= currentScreen.clipBound_X2 || y >= currentScreen.clipBound_Y2) return 0;
-    return Engine.frameBuffer[x + y * currentScreen.pitch];
+    return PPU::frameBuffer[x + y * currentScreen.pitch];
 }
 
 void PPU::SetPixel(int32 x, int32 y, uint8 color)
 {
     if (x < currentScreen.clipBound_X1 || y < currentScreen.clipBound_Y1 || x >= currentScreen.clipBound_X2 || y >= currentScreen.clipBound_Y2) return;
-    Engine.frameBuffer[x + y * currentScreen.pitch] = PALETTE_ENTRY_TO_RGB565(color);
+    PPU::frameBuffer[x + y * currentScreen.pitch] = PALETTE_ENTRY_TO_RGB565(color);
 }
 
 Vector2 PPU::GetScreenPosition()
@@ -124,7 +130,7 @@ void PPU::DrawRectangle(int32 x, int32 y, int32 width, int32 height, uint8 colIn
         return;
 
     int32 pitch = currentScreen.pitch - width;
-    uint16* frameBuffer = &Engine.frameBuffer[x + (y * currentScreen.pitch)];
+    uint16* frameBuffer = &PPU::frameBuffer[x + (y * currentScreen.pitch)];
 
     int32 h = height;
     while (h--)
@@ -290,7 +296,7 @@ void PPU::DrawLine(int32 x1, int32 y1, int32 x2, int32 y2, uint8 color)
         drawY2 = v;
     }
 
-    uint16* frameBuffer = &Engine.frameBuffer[drawX1 + (drawY1 * currentScreen.pitch)];
+    uint16* frameBuffer = &PPU::frameBuffer[drawX1 + (drawY1 * currentScreen.pitch)];
 
     if (drawY1 > drawY2) {
         while (drawX1 < drawX2 || drawY1 >= drawY2) {
@@ -384,7 +390,7 @@ void PPU::DrawBackground(Image* image, int32 x, int32 y)
 
     // Colors
     const auto fullPalette = activePalette;
-    auto frameBuffer = &Engine.frameBuffer[0];
+    auto frameBuffer = &PPU::frameBuffer[0];
 
     // Blitting/painting
     int nscan = 0;
@@ -484,7 +490,7 @@ void PPU::DrawSprite(Sprite* sprite, int32 x, int32 y)
     int32 pitch = currentScreen.pitch - width;
     int32 gfxPitch = 0;
     uint8* lineBuffer = NULL;
-    uint16* frameBuffer = &Engine.frameBuffer[x + currentScreen.pitch * y];
+    uint16* frameBuffer = &PPU::frameBuffer[x + currentScreen.pitch * y];
 
     uint8* indices = texture->pixels;
     PaletteEntry* fullPalette = activePalette;
@@ -521,7 +527,7 @@ void PPU::ApplyMosaicEffect(int32 size)
         {
             // Sample the top-left pixel of the block
             int32 topLeftIndex = y * SCREEN_XSIZE + x;
-            uint16 color = Engine.frameBuffer[topLeftIndex];
+            uint16 color = PPU::frameBuffer[topLeftIndex];
 
             // Fill the block with the sampled pixel
             for (int32 dy = 0; dy < size; ++dy)
@@ -532,7 +538,7 @@ void PPU::ApplyMosaicEffect(int32 size)
                     int32 py = y + dy;
                     if (px < SCREEN_XSIZE && py < SCREEN_YSIZE)
                     {
-                        Engine.frameBuffer[py * SCREEN_XSIZE + px] = color;
+                        PPU::frameBuffer[py * SCREEN_XSIZE + px] = color;
                     }
                 }
             }

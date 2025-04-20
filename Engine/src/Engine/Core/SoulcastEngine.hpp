@@ -56,8 +56,8 @@ enum SoulcastStates
 #include "Engine/Core/Stream.hpp"
 
 #include "Engine/Graphics/Animation.hpp"
-#include "Engine/Graphics/Drawing.hpp"
 #include "Engine/Graphics/Palette.hpp"
+#include "Engine/Graphics/PPU.hpp"
 #include "Engine/Graphics/Sprite.hpp"
 
 #include "Engine/Input/Input.hpp"
@@ -95,9 +95,7 @@ namespace Soulcast
 		bool frameStep				= false;
 
 		SoundChip soundChip;
-
-		uint16* frameBuffer			= nullptr;
-		uint32* texBuffer			= nullptr;
+		PPU ppu;
 
 	#if SOULCAST_USING_SDL3
 		SDL_Window* window			= nullptr;

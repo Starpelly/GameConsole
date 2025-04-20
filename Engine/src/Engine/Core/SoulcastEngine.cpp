@@ -96,9 +96,6 @@ bool SoulcastEngine::Init()
 	}
 #endif
 
-	Engine.frameBuffer = new uint16[SCREEN_XSIZE * SCREEN_YSIZE];
-	memset(Engine.frameBuffer, 0, (SCREEN_XSIZE * SCREEN_YSIZE) * sizeof(uint16));
-
 	AudioDevice::Init();
 	Input::Init();
 	PPU::Init();
@@ -172,7 +169,6 @@ void SoulcastEngine::Release()
 	Input::Release();
 	AudioDevice::Release();
 
-	free(Engine.frameBuffer);
 #if SOULCAST_USING_SDL3
 	SDL_DestroyTexture(Engine.screenBuffer);
 	SDL_DestroyRenderer(Engine.renderer);
