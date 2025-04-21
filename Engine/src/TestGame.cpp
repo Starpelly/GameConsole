@@ -20,9 +20,9 @@ struct
 
 static int fileTest = 0;
 
-Image testImage1;
-Image testImage2;
-Image marioTexture;
+Bitmap testImage1;
+Bitmap testImage2;
+Bitmap marioTexture;
 
 Sprite testSprite;
 
@@ -37,7 +37,7 @@ TestGame::TestGame()
 	Palette::LoadPaletteBank(1, "Palettes/palacebg.pal");
 	Palette::LoadPaletteBank(2, "Palettes/mario.pal");
 
-	testSprite.image = &marioTexture;
+	testSprite.bitmap = &marioTexture;
 }
 
 TestGame::~TestGame()
@@ -59,23 +59,18 @@ void TestGame::Update()
 {
 	if (Input::IsButtonDown(INPUT_RIGHT))
 	{
-		speed += 0.02f;
+		speed = 0.02f;
 	}
-	else if (speed > 0.0f)
+	else if (Input::IsButtonDown(INPUT_LEFT))
 	{
-		speed -= 0.02f;
+		speed = -0.02f;
+	}
+	else
+	{
+		speed = 0.0f;
 	}
 
-	if (Input::IsButtonDown(INPUT_LEFT))
-	{
-		speed -= 0.02f;
-	}
-	else if (speed < 0.0f)
-	{
-		speed += 0.02f;
-	}
-
-	pos_x += 6.0f * speed;
+	pos_x += 256.0f * speed;
 
 	State.cameraPos.x = (int32)pos_x;
 	State.cameraPos.y = (int32)pos_y;
@@ -85,7 +80,7 @@ void TestGame::Update()
 		// currentPlayer->duty -= 1 / 16.0f;
 		// AudioDevice::TestThing(freq);
 		fileTest--;
-		loadPCMFile(fileTest);
+		// loadPCMFile(fileTest);
 	}
 	if (Input::IsButtonPressed(INPUT_UP))
 	{
@@ -93,13 +88,13 @@ void TestGame::Update()
 		// AudioDevice::TestThing(freq);
 
 		fileTest++;
-		loadPCMFile(fileTest);
+		// loadPCMFile(fileTest);
 	}
 
 	auto mousePan = Math::lerp(-1, 1, ((float)Input::mouseX) / (SCREEN_XSIZE * Engine.windowScale));
 	auto mouseFreq = -(Input::mouseY - (SCREEN_YSIZE * Engine.windowScale));
-	AudioDevice::SetPCMFreq(mouseFreq);
-	AudioDevice::SetPCMPan(0.0f);
+	// AudioDevice::SetPCMFreq(mouseFreq);
+	// AudioDevice::SetPCMPan(0.0f);
 }
 
 const int rx = SCREEN_XSIZE / 2;
@@ -117,6 +112,7 @@ static float t()
 void TestGame::Render()
 {
 	PPU::ClearScreen(9);
+	Palette::SetActivePalette(0);
 
 #if false
 	for (int32 y = -ry; y < ry; y += 3)
@@ -130,16 +126,18 @@ void TestGame::Render()
 	}
 #endif
 
-	PPU::SetScreenPosition(-State.cameraPos.x, -State.cameraPos.y);
+	// PPU::SetScreenPosition(-State.cameraPos.x, -State.cameraPos.y);
 
-	Palette::SetActivePalette(1);
-	PPU::DrawBackground(&testImage2, 0, 192);
+	PPU::DrawRectangle(0, 0, 32, 32, ACTIVE_PALETTE_ENTRY_TO_RGB565(1));
+
+	// Palette::SetActivePalette(1);
+	// PPU::DrawBackground(&testImage2, 0, 192);
 	
-	Palette::SetActivePalette(0);
-	PPU::DrawBackground(&testImage1, 0, 184);
+	// Palette::SetActivePalette(0);
+	// PPU::DrawBackground(&testImage1, 0, 184);
 
-	Palette::SetActivePalette(2);
-	PPU::DrawSprite(&testSprite, 64, 168);
+	// Palette::SetActivePalette(2);
+	// PPU::DrawSprite(&testSprite, 64, 168);
 }
 
 void PlayerEntity::Update()

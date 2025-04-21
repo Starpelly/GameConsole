@@ -34,16 +34,16 @@ size_t getBytesPerPixel(const spng_ihdr* ihdr)
     return (size_t)(bits_per_pixel + 7) / 8; // Add 7 and divide to round up
 }
 
-Image::Image()
+Bitmap::Bitmap()
 {
 }
 
-Image::~Image()
+Bitmap::~Bitmap()
 {
     Dispose();
 }
 
-void Image::Load(const char* fileName)
+void Bitmap::Load(const char* fileName)
 {
     FILE* png_file = fopen(fileName, "rb");
     if (!png_file)
@@ -61,7 +61,7 @@ void Image::Load(const char* fileName)
 
     spng_set_png_file(spngctx, png_file);
 
-    // Get image info
+    // Get bitmap info
     struct spng_ihdr ihdr;
     if (spng_get_ihdr(spngctx, &ihdr))
     {
@@ -74,7 +74,7 @@ void Image::Load(const char* fileName)
     // Check for indexed color type
     if (ihdr.color_type != SPNG_COLOR_TYPE_INDEXED)
     {
-        fprintf(stderr, "Image is not indexed color\n");
+        fprintf(stderr, "Bitmap is not indexed color\n");
         spng_ctx_free(spngctx);
         fclose(png_file);
         return;
@@ -99,12 +99,12 @@ void Image::Load(const char* fileName)
         palette[i] = PaletteEntry(entry.red, entry.green, entry.blue);
     }
 
-    // Allocate memory for raw image data
+    // Allocate memory for raw bitmap data
     size_t image_size;
     spng_decoded_image_size(spngctx, SPNG_FMT_PNG, &image_size);
     if (!image_size)
     {
-        fprintf(stderr, "Failed to get image size\n");
+        fprintf(stderr, "Failed to get bitmap size\n");
         // free(palette);
         spng_ctx_free(spngctx);
         fclose(png_file);
@@ -113,23 +113,23 @@ void Image::Load(const char* fileName)
     pixels = (uint8*)malloc(image_size);
     if (!pixels)
     {
-        fprintf(stderr, "Failed to allocate memory for image\n");
+        fprintf(stderr, "Failed to allocate memory for bitmap\n");
         spng_ctx_free(spngctx);
         fclose(png_file);
         return;
     }
 
-    // Decode the image
+    // Decode the bitmap
     if (spng_decode_image(spngctx, pixels, image_size, SPNG_FMT_PNG, 0))
     {
-        fprintf(stderr, "Failed to decode image\n");
+        fprintf(stderr, "Failed to decode bitmap\n");
         // free(palette);
         free(pixels);
         spng_ctx_free(spngctx);
         fclose(png_file);
     }
 
-    // printf("Image decoded successfully\n");
+    // printf("Bitmap decoded successfully\n");
     fclose(png_file);
 
     width = ihdr.width;
@@ -141,7 +141,7 @@ void Image::Load(const char* fileName)
     // m_ColorFormat = (ColorFormat)ihdr.color_type;
 }
 
-void Image::Dispose()
+void Bitmap::Dispose()
 {
     if (disposed) return;
 

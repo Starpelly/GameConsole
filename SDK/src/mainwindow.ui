@@ -78,7 +78,14 @@
     <addaction name="separator"/>
     <addaction name="actionQuit"/>
    </widget>
+   <widget class="QMenu" name="menuTools">
+    <property name="title">
+     <string>Tools</string>
+    </property>
+    <addaction name="actionPalette_Editor"/>
+   </widget>
    <addaction name="menuFile"/>
+   <addaction name="menuTools"/>
   </widget>
   <action name="actionPlayGame">
    <property name="icon">
@@ -175,6 +182,11 @@
   <action name="actionOpen">
    <property name="text">
     <string>Open Project</string>
+   </property>
+  </action>
+  <action name="actionPalette_Editor">
+   <property name="text">
+    <string>Palette Editor</string>
    </property>
   </action>
  </widget>

@@ -8,6 +8,12 @@ namespace Soulcast
 	#define PACK_RGBA8888(r, g, b, a) ((a << 24) | (b << 16) | (g << 8) | r)
 	#define RGB888_TO_RGB565(r, g, b)  ((b) >> 3) | (((g) >> 2) << 5) | (((r) >> 3) << 11)
 
+#define PALETTE_ENTRY_TO_RGB565(bank, entry) \
+    RGB888_TO_RGB565(fullPalette[bank][entry].r, fullPalette[bank][entry].g, fullPalette[bank][entry].b)
+
+#define ACTIVE_PALETTE_ENTRY_TO_RGB565(entry) \
+    RGB888_TO_RGB565(activePalette[entry].r, activePalette[entry].g, activePalette[entry].b)
+
 	struct PaletteEntry
 	{
 		uint8 r;

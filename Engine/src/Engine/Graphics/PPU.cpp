@@ -6,9 +6,6 @@ int GFX_LINESIZE;
 
 bool screenRelative = false;
 
-#define PALETTE_ENTRY_TO_RGB565(entry) \
-    RGB888_TO_RGB565(activePalette[entry].r, activePalette[entry].g, activePalette[entry].b)
-
 // uint16* PPU::frameBuffer;
 // uint16* PPU::debugFrameBuffer;
 
@@ -114,15 +111,13 @@ void PPU::Present()
 #endif
 }
 
-void PPU::RenderPalette(int32 bank)
+void PPU::RenderPalette(int32 bank, int32 y)
 {
-    ClearScreen(RGB888_TO_RGB565(0, 8, 133));
-
     const int32 windowPadding = 4;
     const int32 swatchPadding = 0;
 
-    const int32 swatchSize = 4;
-    const int32 swatchSpacing = 0;
+    const int32 swatchSize = 2;
+    const int32 swatchSpacing = 1;
 
     const int32 width = DEBUG_XSIZE - (windowPadding * 2);
     const int32 rectsPerLine = width / (swatchSize + swatchSpacing);
@@ -136,18 +131,17 @@ void PPU::RenderPalette(int32 bank)
     }
 
     int32 rectX = 0;
-    int32 rectY = 0;
+    int32 rectY = y;
     
     // Background
     // DrawRectangle(windowPadding, windowPadding, width + swatchPadding, height + swatchPadding, RGB888_TO_RGB565(25, 25, 25));
 
     // Actually draw swatches
-    Palette::SetActivePalette(bank);
     for (int32 i = 0; i < PALETTE_BANK_SIZE; i++)
     {
         if (i != 0) // 0 is transparent
         {
-            DrawRectangle(rectX + (windowPadding + swatchPadding), rectY + (windowPadding + swatchPadding), swatchSize, swatchSize, PALETTE_ENTRY_TO_RGB565(i));
+            DrawRectangle(rectX + (windowPadding + swatchPadding), rectY + (windowPadding + swatchPadding), swatchSize, swatchSize, PALETTE_ENTRY_TO_RGB565(bank, i));
         }
 
         rectX += swatchSize + swatchSpacing;
@@ -181,7 +175,7 @@ uint16 PPU::GetPixel(int32 x, int32 y)
 void PPU::SetPixel(int32 x, int32 y, uint8 color)
 {
     if (x < activeScreen->clipBound_X1 || y < activeScreen->clipBound_Y1 || x >= activeScreen->clipBound_X2 || y >= activeScreen->clipBound_Y2) return;
-    activeScreen->frameBuffer[x + y * activeScreen->pitch] = PALETTE_ENTRY_TO_RGB565(color);
+    activeScreen->frameBuffer[x + y * activeScreen->pitch] = ACTIVE_PALETTE_ENTRY_TO_RGB565(color);
 }
 
 Vector2 PPU::GetScreenPosition()
@@ -442,11 +436,11 @@ void PPU::DrawLine(int32 x1, int32 y1, int32 x2, int32 y2, uint16 color)
 	color = fullPalette[paletteIndex].Packed();\
 	transparent = paletteIndex == 0;\
 
-void PPU::DrawBackground(Image* image, int32 x, int32 y)
+void PPU::DrawBackground(Bitmap* bitmap, int32 x, int32 y)
 {
     // These need to be casted to signed integers because we need negative numbers to wrap properly.
-    const auto bitmapWidth = (int32)image->width;
-    const auto bitmapHeight = (int32)image->height;
+    const auto bitmapWidth = (int32)bitmap->width;
+    const auto bitmapHeight = (int32)bitmap->height;
 
     int32 drawWidth = bitmapWidth;
     int32 drawHeight = bitmapHeight;
@@ -507,7 +501,7 @@ void PPU::DrawBackground(Image* image, int32 x, int32 y)
             width = x1 - x;
 
             uint16* dstPixel = (uint16*)frameBuffer;
-            uint8* srcPixel = (uint8*)(image->pixels + (ypos)*image->pitch + (xpos)); // palette index
+            uint8* srcPixel = (uint8*)(bitmap->pixels + (ypos)*bitmap->pitch + (xpos)); // palette index
 
             int32 blitWidth = width;
             while (blitWidth)
@@ -532,7 +526,7 @@ void PPU::DrawBackground(Image* image, int32 x, int32 y)
 
 void PPU::DrawSprite(Sprite* sprite, int32 x, int32 y)
 {
-    if (sprite->image == nullptr) return;
+    if (sprite->bitmap == nullptr) return;
 
     if (!screenRelative)
     {
@@ -540,7 +534,7 @@ void PPU::DrawSprite(Sprite* sprite, int32 x, int32 y)
         y += activeScreen->position.y;
     }
 
-    auto* texture = sprite->image;
+    auto* texture = sprite->bitmap;
     bool flippedX = false;
     bool flippedY = false;
 

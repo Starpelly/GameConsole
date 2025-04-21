@@ -1,5 +1,5 @@
 #include "SoulcastEngine.hpp"
-#include "TestGame.hpp"
+// #include "TestGame.hpp"
 #include <iostream>
 
 using namespace Soulcast;
@@ -124,6 +124,7 @@ bool SoulcastEngine::Init()
 	AudioDevice::Init();
 	Input::Init();
 	PPU::Init();
+	ScriptingEngine::Init();
 
 	return 0;
 }
@@ -136,7 +137,7 @@ void SoulcastEngine::Run()
 
 	bool masterPaused = false;
 
-	TestGame testGame;
+	// TestGame testGame;
 
 	while (Engine.running)
 	{
@@ -177,8 +178,11 @@ void SoulcastEngine::Run()
 				switch (Engine.mode)
 				{
 				case ENGINE_MAINGAME:
-					testGame.Update();
-					testGame.Render();
+					// testGame.Update();
+					// testGame.Render();
+
+					ScriptingEngine::UpdateScripts();
+					ScriptingEngine::RenderScripts();
 					break;
 
 				case ENGINE_EXITGAME:
@@ -198,7 +202,12 @@ void SoulcastEngine::Run()
 		if (Engine.debugMode)
 		{
 			PPU::SetActiveScreen(&PPU::debugScreen);
-			PPU::RenderPalette(debug.palette);
+			PPU::ClearScreen(RGB888_TO_RGB565(0, 8, 133));
+
+			for (int i = 0; i < PALETTE_BANK_COUNT; i++)
+			{
+				PPU::RenderPalette(i, i * 24);
+			}
 		}
 
 		// Render PPU output to physical screen!
@@ -216,6 +225,7 @@ void SoulcastEngine::Run()
 
 void SoulcastEngine::Release()
 {
+	ScriptingEngine::Release();
 	PPU::Release();
 	Input::Release();
 	AudioDevice::Release();

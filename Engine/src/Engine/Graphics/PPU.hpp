@@ -34,7 +34,7 @@ namespace Soulcast
 		static void Present();
 		static void SetActiveScreen(ScreenInfo* screen);
 
-		static void RenderPalette(int32 bank);
+		static void RenderPalette(int32 bank, int32 y);
 
 		static void ClearScreen(uint16 color);
 
@@ -47,7 +47,7 @@ namespace Soulcast
 		static void DrawRectangle(int32 x, int32 y, int32 width, int32 height, uint16 color);
 		static void DrawLine(int32 x1, int32 y1, int32 x2, int32 y2, uint16 color);
 
-		static void DrawBackground(Image* image, int32 x, int32 y);
+		static void DrawBackground(Bitmap* bitmap, int32 x, int32 y);
 		static void DrawSprite(Sprite* sprite, int32 x, int32 y);
 
 		static void ApplyMosaicEffect(int32 size);

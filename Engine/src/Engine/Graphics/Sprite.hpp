@@ -4,10 +4,10 @@ struct spng_ctx;
 
 namespace Soulcast
 {
-	struct Image
+	struct Bitmap
 	{
-		Image();
-		~Image();
+		Bitmap();
+		~Bitmap();
 
 		void Load(const char* fileName);
 		void Dispose();
@@ -32,6 +32,6 @@ namespace Soulcast
 		int32 w = 0;
 		int32 h = 0;
 
-		Image* image = nullptr;
+		Bitmap* bitmap = nullptr;
 	};
 }

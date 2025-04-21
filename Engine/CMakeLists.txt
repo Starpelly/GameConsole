@@ -60,6 +60,19 @@ target_include_directories(SoulcastEngine PRIVATE ${SOULCAST_ENGINE_VENDOR_DIR}/
 target_link_libraries(SoulcastEngine PRIVATE spng)
 
 #--------------------------------------------------------------------
+# Lua
+#--------------------------------------------------------------------
+add_subdirectory(${SOULCAST_ENGINE_VENDOR_DIR}/lua)
+target_include_directories(SoulcastEngine PRIVATE ${SOULCAST_ENGINE_VENDOR_DIR}/lua/lua-5.4.7/include)
+
+target_link_libraries(SoulcastEngine PRIVATE lua_static)
+
+#--------------------------------------------------------------------
+# kaguya (lua-C++)
+#--------------------------------------------------------------------
+target_include_directories(SoulcastEngine PRIVATE ${SOULCAST_ENGINE_VENDOR_DIR}/kaguya/include)
+
+#--------------------------------------------------------------------
 # Folder structuring in Visual Studio
 #--------------------------------------------------------------------
 set_target_properties(SDL3-static PROPERTIES FOLDER "Vendor/Engine")

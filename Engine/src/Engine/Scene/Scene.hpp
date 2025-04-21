@@ -15,7 +15,7 @@ namespace Soulcast
 		bool hflip = false;
 		bool vflip = false;
 
-		Image* tile = nullptr;
+		Bitmap* tile = nullptr;
 	};
 
 	struct BackgroundLayer
