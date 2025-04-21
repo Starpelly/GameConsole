@@ -7,19 +7,21 @@ local marioSprite;
 local camX = 0;
 local camY = 0;
 
+function loadBitmap(path)
+    local ret = soul.bitmap.new()
+    ret:load(path)
+
+    return ret;
+end
+
 function soul.init()
     soul.loadPalette(0, "Palettes/palacebg.pal")
     soul.loadPalette(1, "Palettes/switch.pal")
     soul.loadPalette(2, "Palettes/mario.pal")
 
-    testImage1 = soul.bitmap.new()
-    testImage1:load("Sprites/palacebg.png")
-
-    testImage2 = soul.bitmap.new()
-    testImage2:load("Sprites/switch.png")
-
-    marioTexture = soul.bitmap.new()
-    marioTexture:load("Sprites/mario.png")
+    testImage1 = loadBitmap("Sprites/palacebg.png")
+    testImage2 = loadBitmap("Sprites/switch.png")
+    marioTexture = loadBitmap("Sprites/mario.png")
 
     marioSprite = soul.sprite.new()
     marioSprite.bitmap = marioTexture;
@@ -45,5 +47,5 @@ function soul.render()
     soul.setActivePalette(2)
     soul.drawSprite(marioSprite, 64, 168)
 
-    soul.drawRectangle(8, 8, 32, 32, soul.paletteIndexToRGB565(1))
+    soul.drawRectangle(8, 8, 32, 32, soul.paletteIndexToRGB565(2))
 end

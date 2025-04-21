@@ -20,6 +20,12 @@ namespace Soulcast
 		int32 clipBound_Y2;
 	};
 
+	enum class ColorMode
+	{
+		Indirect,	// "Indirect color mode", Use palettes when drawing
+		Direct,		// "Direct color mode", Use the bitmap colors when drawing
+	};
+
 	/// The Picture Processing Unit
 	class PPU
 	{
@@ -38,6 +44,8 @@ namespace Soulcast
 
 		static void ClearScreen(uint16 color);
 
+		static void SetColorMode(ColorMode mode);
+
 		static uint16 GetPixel(int32 x, int32 y);
 		static void SetPixel(int32 x, int32 y, uint8 color);
 
@@ -49,6 +57,7 @@ namespace Soulcast
 
 		static void DrawBackground(Bitmap* bitmap, int32 x, int32 y);
 		static void DrawSprite(Sprite* sprite, int32 x, int32 y);
+		static void DrawSpriteRegion(Sprite* sprite, int32 x, int32 y, int32 sprX, int32 sprY, int32 sprWidth, int32 sprHeight);
 
 		static void ApplyMosaicEffect(int32 size);
 	};
