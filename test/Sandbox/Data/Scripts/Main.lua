@@ -3,22 +3,6 @@ testImage2 = {};
 marioTexture = {};
 marioSprite = {};
 
-camX = 0;
-camY = 0;
-
-INPUT_UP        = 0;
-INPUT_DOWN      = 1;
-INPUT_LEFT      = 2;
-INPUT_RIGHT     = 3;
-INPUT_A         = 4;
-INPUT_B         = 5;
-INPUT_X         = 6;
-INPUT_Y         = 7;
-INPUT_START     = 8;
-INPUT_SELECT    = 9;
-INPUT_ANY       = 10;
-INPUT_MAX       = 11;
-
 package.path = package.path .. ";./scripts/?.lua"
 
 local function loadBitmap(path)

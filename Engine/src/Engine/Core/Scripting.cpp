@@ -1,4 +1,4 @@
-#include "Engine/Core/SoulcastEngine.hpp"
+#include "Engine/Core/Engine.hpp"
 
 #include <kaguya/kaguya.hpp>
 
@@ -241,7 +241,6 @@ void ScriptingEngine::Init()
 		state[LUA_NAME]["memory"] = kaguya::NewTable();
 		state[LUA_NAME]["memory"]["read"] = &Memory::Peek;
 		state[LUA_NAME]["memory"]["write"] = &Memory::Poke;
-		state[LUA_NAME]["memory"]["write16"] = &Memory::Poke2;
 
 		// Drawing
 		state[LUA_NAME]["clearScreen"] = &PPU::ClearScreen;

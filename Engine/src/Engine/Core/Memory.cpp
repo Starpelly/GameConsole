@@ -1,4 +1,4 @@
-#include "Engine/Core/SoulcastEngine.hpp"
+#include "Engine/Core/Engine.hpp"
 
 using namespace Soulcast;
 
@@ -25,8 +25,4 @@ void Memory::Poke(uint32 addr, byte value)
 	{
 		memory[addr] = value;
 	}
-}
-
-void Memory::Poke2(uint32 addr, uint16 value)
-{
 }

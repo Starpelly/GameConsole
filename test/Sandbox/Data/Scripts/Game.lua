@@ -1,4 +1,6 @@
 player = {};
+camX = 0;
+camY = 0;
 
 function game_init()
     player = mario:new(64, 168)
@@ -32,9 +34,6 @@ function game_render()
     end
     --]]
 
-    neko.drawPixel(0, 0, 255, 0, 255)
-
-    --[[
     soul.setScreenPosition(-camX, camY)
 
     -- Draw backgrounds
@@ -46,7 +45,6 @@ function game_render()
 
     player:render()
 
-    soul.drawRectangle(8, 8, 32, 32, soul.paletteIndexToRGB565(2))
-    ]]--
+    neko.drawPixel(0, 0, 255, 0, 255)
 end
 --[[END]]

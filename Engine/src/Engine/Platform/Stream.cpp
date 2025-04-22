@@ -1,6 +1,6 @@
 // Modified from https://github.com/NoelFB/blah/blob/master/src/blah_stream.cpp
 
-#include "Engine/Core/SoulcastEngine.hpp"
+#include "Engine/Core/Engine.hpp"
 
 using namespace Soulcast;
 

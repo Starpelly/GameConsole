@@ -3,6 +3,19 @@ SCREEN_YSIZE = 240;
 
 FRAMEBUFFER_START = 0x0000
 
+INPUT_UP        = 0
+INPUT_DOWN      = 1
+INPUT_LEFT      = 2
+INPUT_RIGHT     = 3
+INPUT_A         = 4
+INPUT_B         = 5
+INPUT_X         = 6
+INPUT_Y         = 7
+INPUT_START     = 8
+INPUT_SELECT    = 9
+INPUT_ANY       = 10
+INPUT_MAX       = 11
+
 neko = {}
 
 -- This seems pretty slow, especially in lua
