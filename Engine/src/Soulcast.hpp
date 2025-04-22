@@ -26,6 +26,8 @@ using uint64 = std::uint64_t;
 using float32 = float;
 using float64 = double;
 
+using byte = uint8;
+
 // =========
 // Platforms
 // =========

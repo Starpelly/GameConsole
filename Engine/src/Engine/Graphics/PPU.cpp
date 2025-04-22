@@ -16,13 +16,21 @@ ScreenInfo* activeScreen;
 
 ColorMode colorMode;
 
-static void initScreenInfo(ScreenInfo* screen, int32 width, int32 height)
+static void initScreenInfo(ScreenInfo* screen, int32 width, int32 height, bool gameScreen)
 {
     screen->size.x = width;
     screen->size.y = height;
 
-    screen->frameBuffer = new uint16[screen->size.x * screen->size.y];
-    memset(screen->frameBuffer, 0, (screen->size.x * screen->size.y) * sizeof(uint16));
+    if (gameScreen)
+    {
+        // The game screen uses memory pre allocated that the user can read and write to.
+        screen->frameBuffer = reinterpret_cast<uint16*>(&Memory::memory[Memory::FRAMEBUFFER_START]);
+    }
+    else
+    {
+        screen->frameBuffer = new uint16[screen->size.x * screen->size.y];
+        memset(screen->frameBuffer, 0, (screen->size.x * screen->size.y) * sizeof(uint16));
+    }
 
     screen->pitch = screen->size.x;
 
@@ -36,13 +44,13 @@ void PPU::Init()
 {
     // Game screen
     {
-        initScreenInfo(&PPU::gameScreen, SCREEN_XSIZE, SCREEN_YSIZE);
+        initScreenInfo(&PPU::gameScreen, SCREEN_XSIZE, SCREEN_YSIZE, true);
     }
 
     // Debug screen
     if (Engine.debugMode)
     {
-        initScreenInfo(&PPU::debugScreen, DEBUG_XSIZE, SCREEN_YSIZE);
+        initScreenInfo(&PPU::debugScreen, DEBUG_XSIZE, SCREEN_YSIZE, false);
     }
     
     // Active screen is the game screen by default
@@ -56,7 +64,7 @@ void PPU::Release()
     {
         free(PPU::debugScreen.frameBuffer);
     }
-    free(PPU::gameScreen.frameBuffer);
+    // free(PPU::gameScreen.frameBuffer);
 }
 
 void PPU::SetActiveScreen(ScreenInfo* screen)

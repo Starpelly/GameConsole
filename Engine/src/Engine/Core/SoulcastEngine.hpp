@@ -56,6 +56,7 @@ enum SoulcastStates
 #include "Engine/Core/Assert.hpp"
 #include "Engine/Core/Filesystem.hpp"
 #include "Engine/Core/Math.hpp"
+#include "Engine/Core/Memory.hpp"
 #include "Engine/Core/Platform.hpp"
 #include "Engine/Core/Scripting.hpp"
 #include "Engine/Core/Stream.hpp"
