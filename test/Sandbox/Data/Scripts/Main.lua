@@ -13,12 +13,12 @@ local function loadBitmap(path)
 end
 
 function soul.init()
-    soul.loadPalette(0, "Palettes/palacebg.pal")
-    soul.loadPalette(1, "Palettes/switch.pal")
+    soul.loadPalette(0, "Palettes/mariobg.pal")
+    soul.loadPalette(1, "Palettes/donutplains.pal")
     soul.loadPalette(2, "Palettes/mario.pal")
 
-    testImage1 = loadBitmap("Sprites/palacebg.png")
-    testImage2 = loadBitmap("Sprites/switch.png")
+    testImage1 = loadBitmap("Sprites/marioworldbg.png")
+    testImage2 = loadBitmap("Sprites/donutplains.png")
     marioTexture = loadBitmap("Sprites/mario.png")
 
     marioSprite = soul.sprite.new()

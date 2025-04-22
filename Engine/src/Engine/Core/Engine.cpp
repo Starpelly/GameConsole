@@ -257,7 +257,12 @@ bool SoulcastEngine::ProcessEvents()
 			Engine.mode = ENGINE_EXITGAME; return false;
 
 		case SDL_EVENT_KEY_DOWN:
+			auto key = event.key.scancode;
 
+			if (key == SDL_SCANCODE_R) // I'm lazy
+			{
+				ScriptingEngine::Reset();
+			}
 			break;
 		}
 	}

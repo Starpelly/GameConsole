@@ -542,92 +542,12 @@ void PPU::DrawBackground(Bitmap* bitmap, int32 x, int32 y)
 
 void PPU::DrawSprite(Sprite* sprite, int32 x, int32 y)
 {
-    if (sprite->bitmap == nullptr) return;
-    auto* texture = sprite->bitmap;
-
-    /*
-    if (sprite->bitmap == nullptr) return;
-
-    if (!screenRelative)
-    {
-        x += activeScreen->position.x;
-        y += activeScreen->position.y;
-    }
-
-    auto* texture = sprite->bitmap;
-    bool flippedX = false;
-    bool flippedY = false;
-
-    int32 sprX = 0;
-    int32 sprY = 0;
-
-    int width = texture->width;
-    int height = texture->height;
-
-    int widthFlip = width;
-    int heightFlip = height;
-
-    if (width + x > activeScreen->clipBound_X2)
-        width = activeScreen->clipBound_X2 - x;
-
-    if (x < activeScreen->clipBound_X1) {
-        int32 val = x - activeScreen->clipBound_X1;
-        sprX -= val;
-        width += val;
-        widthFlip += 2 * val;
-        x = activeScreen->clipBound_X1;
-    }
-
-    if (height + y > activeScreen->clipBound_Y2)
-        height = activeScreen->clipBound_Y2 - y;
-
-    if (y < activeScreen->clipBound_Y1) {
-        int32 val = y - activeScreen->clipBound_Y1;
-        sprY -= val;
-        height += val;
-        heightFlip += 2 * val;
-        y = activeScreen->clipBound_Y1;
-    }
-
-    if (width <= 0 || height <= 0)
+    if (sprite->bitmap == nullptr)
         return;
-
-    auto surface = texture;
-
-    int32 pitch = activeScreen->pitch - width;
-    int32 gfxPitch = 0;
-    uint8* lineBuffer = NULL;
-    uint16* frameBuffer = &activeScreen->frameBuffer[x + activeScreen->pitch * y];
-
-    uint8* indices = texture->pixels;
-    PaletteEntry* fullPalette = activePalette;
-
-    gfxPitch = surface->width - width;
-
-    indices = &indices[sprX + texture->width * sprY];
-
-    while (height--)
-    {
-        int32 w = width;
-        while (w--)
-        {
-            MIXIN_PIXEL_COLOR();
-            if (!transparent)
-            {
-                *frameBuffer = color;
-            }
-            ++frameBuffer;
-            MIXIN_INCREMENT_PIXELS(++);
-        }
-        frameBuffer += pitch;
-        MIXIN_INCREMENT_PIXELS(+= gfxPitch);
-    }
-    */
-
-    PPU::DrawSpriteRegion(sprite, x, y, 0, 0, texture->width, texture->height);
+    PPU::DrawSpriteRegion(sprite, x, y, 0, 0, sprite->bitmap->width, sprite->bitmap->height);
 }
 
-void PPU::DrawSpriteRegion(Sprite* sprite, int32 x, int32 y, int32 sprX, int32 sprY, int32 sprWidth, int32 sprHeight)
+void PPU::DrawSpriteRegion(Sprite* sprite, int32 x, int32 y, int32 sprX, int32 sprY, int32 sprWidth, int32 sprHeight, SpriteFlip flip)
 {
     if (sprite->bitmap == nullptr) return;
 
@@ -638,8 +558,6 @@ void PPU::DrawSpriteRegion(Sprite* sprite, int32 x, int32 y, int32 sprX, int32 s
     }
 
     auto* texture = sprite->bitmap;
-    bool flippedX = false;
-    bool flippedY = false;
 
     int width = sprWidth;
     int height = sprHeight;
@@ -682,25 +600,100 @@ void PPU::DrawSpriteRegion(Sprite* sprite, int32 x, int32 y, int32 sprX, int32 s
     uint8* indices = texture->pixels;
     PaletteEntry* fullPalette = (colorMode == ColorMode::Indirect) ? activePalette : texture->palette;
 
-    gfxPitch = surface->width - width;
+    bool flippedX = flip & FLIP_X;
+    bool flippedY = flip & FLIP_Y;
 
-    indices = &indices[sprX + texture->width * sprY];
-
-    while (height--)
+    if (!flippedX && !flippedY)
     {
-        int32 w = width;
-        while (w--)
+        gfxPitch = surface->width - width;
+
+        indices = &indices[sprX + texture->width * sprY];
+
+        while (height--)
         {
-            MIXIN_PIXEL_COLOR();
-            if (!transparent)
+            int32 w = width;
+            while (w--)
             {
-                *frameBuffer = color;
+                MIXIN_PIXEL_COLOR();
+                if (!transparent)
+                {
+                    *frameBuffer = color;
+                }
+                ++frameBuffer;
+                MIXIN_INCREMENT_PIXELS(++);
             }
-            ++frameBuffer;
-            MIXIN_INCREMENT_PIXELS(++);
+            frameBuffer += pitch;
+            MIXIN_INCREMENT_PIXELS(+= gfxPitch);
         }
-        frameBuffer += pitch;
-        MIXIN_INCREMENT_PIXELS(+= gfxPitch);
+    }
+    else if (flippedX && !flippedY)
+    {
+        gfxPitch = width + surface->width;
+
+        indices = &indices[widthFlip - 1 + sprX + texture->width * sprY];
+
+        while (height--)
+        {
+            int32 w = width;
+            while (w--)
+            {
+                MIXIN_PIXEL_COLOR();
+                if (!transparent)
+                {
+                    *frameBuffer = color;
+                }
+                ++frameBuffer;
+                MIXIN_INCREMENT_PIXELS(--);
+            }
+            frameBuffer += pitch;
+            MIXIN_INCREMENT_PIXELS(+= gfxPitch);
+        }
+    }
+    else if (flippedY && !flippedX)
+    {
+        gfxPitch = width + surface->width;
+
+        indices = &indices[sprX + texture->width * (sprY + heightFlip - 1)];
+
+        while (height--)
+        {
+            int32 w = width;
+            while (w--)
+            {
+                MIXIN_PIXEL_COLOR();
+                if (!transparent)
+                {
+                    *frameBuffer = color;
+                }
+                ++frameBuffer;
+                MIXIN_INCREMENT_PIXELS(++);
+            }
+            frameBuffer += pitch;
+            MIXIN_INCREMENT_PIXELS(-= gfxPitch);
+        }
+    }
+    else
+    {
+        gfxPitch = surface->width - width;
+
+        indices = &indices[widthFlip - 1 + sprX + texture->width * (sprY + heightFlip - 1)];
+
+        while (height--)
+        {
+            int32 w = width;
+            while (w--)
+            {
+                MIXIN_PIXEL_COLOR();
+                if (!transparent)
+                {
+                    *frameBuffer = color;
+                }
+                ++frameBuffer;
+                MIXIN_INCREMENT_PIXELS(--);
+            }
+            frameBuffer += pitch;
+            MIXIN_INCREMENT_PIXELS(-= gfxPitch);
+        }
     }
 }
 

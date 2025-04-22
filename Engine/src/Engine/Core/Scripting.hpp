@@ -11,7 +11,12 @@ namespace Soulcast
 		static void UpdateScripts();
 		static void RenderScripts();
 
+		static void Reset();
+
 	private:
+		static void InitLua();
+		static void StartROM();
+
 		static bool LoadScript(const char* path);
 		static void StartHotloader();
 		static void HotloadActive();

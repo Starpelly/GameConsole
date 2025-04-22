@@ -26,6 +26,13 @@ namespace Soulcast
 		Direct,		// "Direct color mode", Use the bitmap colors when drawing
 	};
 
+	enum SpriteFlip
+	{
+		FLIP_NONE = 1 << 0,
+		FLIP_X = 1 << 1,
+		FLIP_Y = 1 << 2,
+	};
+
 	/// The Picture Processing Unit
 	class PPU
 	{
@@ -57,7 +64,7 @@ namespace Soulcast
 
 		static void DrawBackground(Bitmap* bitmap, int32 x, int32 y);
 		static void DrawSprite(Sprite* sprite, int32 x, int32 y);
-		static void DrawSpriteRegion(Sprite* sprite, int32 x, int32 y, int32 sprX, int32 sprY, int32 sprWidth, int32 sprHeight);
+		static void DrawSpriteRegion(Sprite* sprite, int32 x, int32 y, int32 sprX, int32 sprY, int32 sprWidth, int32 sprHeight, SpriteFlip flip = FLIP_NONE);
 
 		static void ApplyMosaicEffect(int32 size);
 	};

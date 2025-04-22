@@ -16,6 +16,10 @@ INPUT_SELECT    = 9
 INPUT_ANY       = 10
 INPUT_MAX       = 11
 
+FLIP_NONE = 0
+FLIP_X = 2
+FLIP_Y = 4
+
 neko = {}
 
 -- This seems pretty slow, especially in lua

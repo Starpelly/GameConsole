@@ -38,7 +38,7 @@ function game_render()
 
     -- Draw backgrounds
     soul.setActivePalette(0)
-    soul.drawBackground(testImage1, 0, 192)
+    soul.drawBackground(testImage1, math.floor((-camX / 2) + 0.5), 192)
 
     soul.setActivePalette(1)
     soul.drawBackground(testImage2, 0, 184)

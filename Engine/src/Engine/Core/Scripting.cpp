@@ -225,65 +225,8 @@ void ScriptingEngine::Init()
 	fontBitmap.Load("Sprites/font.png");
 	font.bitmap = &fontBitmap;
 
-	// Init lua
-	L = luaL_newstate();
-	luaL_openlibs(L);
-
-	kaguya::State state(L);
-	state.setErrorHandler(HandleError);
-
-	// Create console table
-	state[LUA_NAME] = kaguya::NewTable();
-
-	// Global functions
-	{
-		// Memory
-		state[LUA_NAME]["memory"] = kaguya::NewTable();
-		state[LUA_NAME]["memory"]["read"] = &Memory::Peek;
-		state[LUA_NAME]["memory"]["write"] = &Memory::Poke;
-
-		// Drawing
-		state[LUA_NAME]["clearScreen"] = &PPU::ClearScreen;
-		state[LUA_NAME]["drawRectangle"] = &PPU::DrawRectangle;
-		state[LUA_NAME]["drawBackground"] = &PPU::DrawBackground;
-		state[LUA_NAME]["drawSprite"] = &PPU::DrawSprite;
-		state[LUA_NAME]["setScreenPosition"] = &PPU::SetScreenPosition;
-
-		// Palettes
-		state[LUA_NAME]["loadPalette"] = &Palette::LoadPaletteBank;
-		state[LUA_NAME]["setActivePalette"] = &Palette::SetActivePalette;
-		state[LUA_NAME]["paletteIndexToRGB565"] = &PaletteIndexToRGB565;
-
-		// Input
-		state[LUA_NAME]["gamepad"] = kaguya::NewTable();
-		state[LUA_NAME]["gamepad"]["isDown"] = &Input::IsButtonDown;
-		state[LUA_NAME]["gamepad"]["isPressed"] = &Input::IsButtonPressed;
-	}
-	// Classes
-	{
-		// Vector2
-		state[LUA_NAME]["vector2"].setClass(kaguya::UserdataMetatable<Vector2>()
-			.setConstructors<Vector2()>()
-			.addProperty("x", &Vector2::x)
-			.addProperty("y", &Vector2::y)
-		);
-
-		// Sprite
-		state[LUA_NAME]["sprite"].setClass(kaguya::UserdataMetatable<Sprite>()
-			.setConstructors<Sprite()>()
-			.addProperty("bitmap", &Sprite::bitmap)
-		);
-
-		// Bitmap
-		state[LUA_NAME]["bitmap"].setClass(kaguya::UserdataMetatable<Bitmap>()
-			.setConstructors<Bitmap()>()
-			.addFunction("load", &Bitmap::Load)
-		);
-	}
-
-	// Load test file
-	LoadScript("Scripts/Main.lua");
-	state[LUA_NAME]["init"]();
+	InitLua();
+	StartROM();
 
 	StartHotloader();
 }
@@ -320,6 +263,91 @@ void ScriptingEngine::RenderScripts()
 		kaguya::State state(L);
 		state[LUA_NAME]["render"]();
 	}
+}
+
+void ScriptingEngine::Reset()
+{
+	if (L)
+	{
+		lua_close(L);
+	}
+	hadErrors = false;
+
+	InitLua();
+	StartROM();
+}
+
+/// =======================================================================================================================
+/// Private Methods
+/// =======================================================================================================================
+
+void ScriptingEngine::InitLua()
+{
+	// Init lua
+	L = luaL_newstate();
+	luaL_openlibs(L);
+
+	kaguya::State state(L);
+	state.setErrorHandler(HandleError);
+
+	// Create console table
+	state[LUA_NAME] = kaguya::NewTable();
+
+	// Global functions
+	{
+		// Memory
+		state[LUA_NAME]["memory"] = kaguya::NewTable();
+		state[LUA_NAME]["memory"]["read"] = &Memory::Peek;
+		state[LUA_NAME]["memory"]["write"] = &Memory::Poke;
+
+		// Drawing
+		state[LUA_NAME]["clearScreen"] = &PPU::ClearScreen;
+		state[LUA_NAME]["setScreenPosition"] = &PPU::SetScreenPosition;
+		state[LUA_NAME]["drawRectangle"] = &PPU::DrawRectangle;
+		state[LUA_NAME]["drawBackground"] = &PPU::DrawBackground;
+		state[LUA_NAME]["drawSprite"] = &PPU::DrawSprite;
+		state[LUA_NAME]["drawSpriteRegion"] = &PPU::DrawSpriteRegion;
+
+		// Palettes
+		state[LUA_NAME]["loadPalette"] = &Palette::LoadPaletteBank;
+		state[LUA_NAME]["setActivePalette"] = &Palette::SetActivePalette;
+		state[LUA_NAME]["paletteIndexToRGB565"] = &PaletteIndexToRGB565;
+
+		// Input
+		state[LUA_NAME]["gamepad"] = kaguya::NewTable();
+		state[LUA_NAME]["gamepad"]["isDown"] = &Input::IsButtonDown;
+		state[LUA_NAME]["gamepad"]["isPressed"] = &Input::IsButtonPressed;
+	}
+	// Classes
+	{
+		// Vector2
+		state[LUA_NAME]["vector2"].setClass(kaguya::UserdataMetatable<Vector2>()
+			.setConstructors<Vector2()>()
+			.addProperty("x", &Vector2::x)
+			.addProperty("y", &Vector2::y)
+		);
+
+		// Sprite
+		state[LUA_NAME]["sprite"].setClass(kaguya::UserdataMetatable<Sprite>()
+			.setConstructors<Sprite()>()
+			.addProperty("bitmap", &Sprite::bitmap)
+		);
+
+		// Bitmap
+		state[LUA_NAME]["bitmap"].setClass(kaguya::UserdataMetatable<Bitmap>()
+			.setConstructors<Bitmap()>()
+			.addFunction("load", &Bitmap::Load)
+		);
+	}
+}
+
+void ScriptingEngine::StartROM()
+{
+	// Load test file
+	LoadScript("Scripts/Main.lua");
+
+	kaguya::State state(L);
+	state[LUA_NAME]["init"]();
 }
 
 bool ScriptingEngine::LoadScript(const char* path)
