@@ -3,8 +3,10 @@
 
 #include <QSyntaxStyle>
 #include <QCodeEditor>
-#include <QGLSLCompleter>
-#include <QGLSLHighlighter>
+#include <QLuaCompleter>
+#include <QLuaHighlighter>
+
+#include <QTextStream>
 
 #include "AssetBrowser.hpp"
 
@@ -14,10 +16,23 @@ auto tabName = std::string(tool);\
     tabName.append(title);\
     ui->tabWidget->addTab(widget, QString::fromStdString(tabName));
 
+QString readFileToString(const QString &filePath) {
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return QString(); // or handle the error as needed
+    }
+
+    QTextStream in(&file);
+    in.setCodec("UTF-8"); // optional, ensures proper encoding
+    QString content = in.readAll();
+    file.close();
+    return content;
+}
+
 void testCodeEditor(MainWindow* thiss, Ui::MainWindow* ui)
 {
     auto codeEditor = new QCodeEditor(thiss);
-    MIXIN_OPEN_MAIN_TAB("Code Editor", "Ring.script", codeEditor);
+    MIXIN_OPEN_MAIN_TAB("Code Editor", "game.lua", codeEditor);
 
     QFile fl(":/trinket.xml");
 
@@ -47,10 +62,12 @@ void testCodeEditor(MainWindow* thiss, Ui::MainWindow* ui)
     QFont font(fontFamily, 11);
 
     codeEditor->setSyntaxStyle(style);
-    codeEditor->setCompleter(new QGLSLCompleter(thiss));
-    codeEditor->setHighlighter(new QGLSLHighlighter);
+    codeEditor->setCompleter(new QLuaCompleter(thiss));
+    codeEditor->setHighlighter(new QLuaHighlighter);
 
     codeEditor->setFont(font);
+
+    codeEditor->setText(readFileToString("D:/Soulcast/test/Sandbox/Data/Scripts/game.lua"));
 }
 
 MainWindow::MainWindow(QWidget *parent)
@@ -66,7 +83,7 @@ MainWindow::MainWindow(QWidget *parent)
         ui->assetTreeLayout->addWidget(assetBrowser);
     }
 
-    // testCodeEditor(this, ui);
+    testCodeEditor(this, ui);
     // ui->tabWidget->addTab()
 }
 

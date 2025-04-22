@@ -4,6 +4,7 @@
 
 #define SOULCAST_USING_SDL3 (true)
 #define SOULCAST_INPUTDEVICE_SDL3 (true)
+#define SOULCAST_HOTLOADING (true)
 
 struct Color
 {

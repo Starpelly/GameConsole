@@ -10,7 +10,8 @@ public:
     AssetBrowser(QWidget* parent = nullptr);
 
 private:
-    QTreeWidgetItem* CreateFolder(const QString& name);
+    auto CreateFolder(const QString& name) -> QTreeWidgetItem*;
+    auto PopulateTree() -> void;
 };
 
 #endif // ASSETBROWSER_H

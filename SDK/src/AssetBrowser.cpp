@@ -2,6 +2,8 @@
 
 #include <QApplication>
 
+QTreeWidgetItem* scriptsFolder;
+
 AssetBrowser::AssetBrowser(QWidget* parent) : QTreeWidget{parent}
 {
     // Config
@@ -10,16 +12,12 @@ AssetBrowser::AssetBrowser(QWidget* parent) : QTreeWidget{parent}
         this->setHeaderHidden(true);
     }
 
-    CreateFolder("Game");
-    CreateFolder("Images");
-    CreateFolder("Music");
-    CreateFolder("Objects");
     CreateFolder("Palettes"); 
+    scriptsFolder = CreateFolder("Scripts");
     CreateFolder("SoundFX");
-    CreateFolder("Scenes");
     CreateFolder("Sprites");
-    CreateFolder("Strings");
-    CreateFolder("Video");
+
+    PopulateTree();
 }
 
 QTreeWidgetItem *AssetBrowser::CreateFolder(const QString &name)
@@ -30,4 +28,12 @@ QTreeWidgetItem *AssetBrowser::CreateFolder(const QString &name)
     folder->setIcon(0, qApp->style()->standardIcon(QStyle::SP_DirIcon));
 
     return folder;
+}
+
+void AssetBrowser::PopulateTree()
+{
+    const auto item = new QTreeWidgetItem(scriptsFolder);
+    item->setText(0, QString::fromStdString("Game.lua"));
+    item->setIcon(0, qApp->style()->standardIcon(QStyle::SP_FileIcon));
+    // item->setData(0, Qt::UserRole, QVariant::fromValue((uint64_t)sprite.first));
 }

@@ -62,6 +62,8 @@ target_link_libraries(SoulcastEngine PRIVATE spng)
 #--------------------------------------------------------------------
 # Lua
 #--------------------------------------------------------------------
+set(LUA_ENABLED_SHARED FALSE)
+
 add_subdirectory(${SOULCAST_ENGINE_VENDOR_DIR}/lua)
 target_include_directories(SoulcastEngine PRIVATE ${SOULCAST_ENGINE_VENDOR_DIR}/lua/lua-5.4.7/include)
 
@@ -73,11 +75,28 @@ target_link_libraries(SoulcastEngine PRIVATE lua_static)
 target_include_directories(SoulcastEngine PRIVATE ${SOULCAST_ENGINE_VENDOR_DIR}/kaguya/include)
 
 #--------------------------------------------------------------------
+# efsw
+#--------------------------------------------------------------------
+set(BUILD_STATIC ON)
+set(BUILD_SHARED_LIBS OFF)
+set(BUILD_EXAMPLES OFF)
+
+add_subdirectory(${SOULCAST_ENGINE_VENDOR_DIR}/efsw)
+target_link_libraries(SoulcastEngine PRIVATE efsw)
+
+#--------------------------------------------------------------------
 # Folder structuring in Visual Studio
 #--------------------------------------------------------------------
 set_target_properties(SDL3-static PROPERTIES FOLDER "Vendor/Engine")
 set_target_properties(SDL_uclibc PROPERTIES FOLDER "Vendor/Engine")
 set_target_properties(spng PROPERTIES FOLDER "Vendor/Engine")
+
+set_target_properties(efsw PROPERTIES FOLDER "Vendor/Engine")
+set_target_properties(efsw-static PROPERTIES FOLDER "Vendor/Engine")
+
+set_target_properties(luac PROPERTIES FOLDER "Vendor/Engine")
+# set_target_properties(lua_shared PROPERTIES FOLDER "Vendor/Engine")
+set_target_properties(lua_static PROPERTIES FOLDER "Vendor/Engine")
 
 if(MSVC_IDE)
 	foreach(source IN LISTS SOULCAST_ENGINE_FILES)
