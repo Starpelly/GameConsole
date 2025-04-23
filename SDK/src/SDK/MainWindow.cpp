@@ -36,9 +36,14 @@ MainWindow::MainWindow(QWidget *parent)
         connect(ui->tabWidget, &QTabWidget::tabCloseRequested, this, &MainWindow::onCloseTab);
     }
 
-    OpenCodeEditor(SDK::GetProjectDataPath() + "Scripts/Game.lua");
+    // Actions
+    {
+        connect(ui->actionPlayGame, &QAction::triggered, this, [this]() {
+            this->OpenPlaytest();
+        });
+    }
 
-    OpenGamePlaytest();
+    OpenCodeEditor(SDK::GetProjectDataPath() + "Scripts/Game.lua");
 }
 
 MainWindow::~MainWindow()
@@ -71,15 +76,31 @@ void MainWindow::OpenCodeEditor(const QString &path)
     OpenTab("Code Editor", relativePath, editor, QIcon(":/icons/lua.svg"));
 }
 
-void MainWindow::OpenGamePlaytest()
+void MainWindow::OpenPlaytest()
 {
     auto* gameWindow = new GameWindow(this);
     gameWindow->show();
     connect(gameWindow, &GameWindow::whenClosed, this, [this, gameWindow]()
     {
         delete gameWindow;
-        // OnGamePlaytestExit();
+        OnPlaytestClose();
     });
+
+    SetToolsEnabled(false);
+}
+
+void MainWindow::OnPlaytestClose()
+{
+    SetToolsEnabled(true);
+}
+
+void MainWindow::SetToolsEnabled(bool val)
+{
+    ui->actionPlayGame->setEnabled(val);
+    ui->actionPlayScene->setEnabled(val);
+    ui->actionBuildGame->setEnabled(val);
+    ui->actionExportGame->setEnabled(val);
+    ui->actionGameSettings->setEnabled(val);
 }
 
 void MainWindow::onCloseTab(int index)

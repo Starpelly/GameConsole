@@ -34,7 +34,7 @@ endif()
 # Folder structuring in Visual Studio
 #--------------------------------------------------------------------
 if(MSVC_IDE)
-	set_target_properties(SDL3-static PROPERTIES FOLDER "Vendor/SDL3")
+	set_target_properties(SDL3-shared PROPERTIES FOLDER "Vendor/SDL3")
 	set_target_properties(SDL_uclibc PROPERTIES FOLDER "Vendor/SDL3")
 
 	foreach(source IN LISTS SOULCAST_PLAYER_FILES)

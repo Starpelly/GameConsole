@@ -86,8 +86,12 @@ namespace Soulcast
 
 		bool Init();
 		void Run();
+        void DoOneFrame();
 		void Release();
-		bool ProcessEvents();
+
+#if SOULCAST_USING_SDL3
+        bool ProcessEvent(const SDL_Event& event);
+#endif
 
 	public:
 		bool initialized			= false;
@@ -99,6 +103,7 @@ namespace Soulcast
 
 		bool borderless				= false;
 		bool vsync					= false;
+        bool windowContained        = false;
 
 		int scalingMode				= 0;
 		int windowScale				= 4;
@@ -108,7 +113,12 @@ namespace Soulcast
 
 		int gameSpeed				= 1;
 		bool frameStep				= false;
+        bool masterPaused           = false;
 		double time					= 0.0;
+
+        uint64 targetFreq           = 0;
+        uint64 curTicks             = 0;
+        uint64 prevTicks            = 0;
 
 		SoundChip soundChip;
 		PPU ppu;

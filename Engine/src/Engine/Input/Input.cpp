@@ -33,6 +33,8 @@ void Input::Clear()
 void Input::Process()
 {
 #if SOULCAST_USING_SDL3
+    SDL_PumpEvents();
+
 	int length = 0;
 	const bool* keyState = SDL_GetKeyboardState(&length);
 

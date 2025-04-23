@@ -10,6 +10,7 @@
 
 QTreeWidgetItem* scriptsFolder;
 QTreeWidgetItem* paletteFolder;
+QTreeWidgetItem* spritesFolder;
 
 AssetBrowser::AssetBrowser(QWidget* parent) : QTreeWidget{parent}
 {
@@ -20,17 +21,27 @@ AssetBrowser::AssetBrowser(QWidget* parent) : QTreeWidget{parent}
         this->setHeaderLabel("Asset Browser");
     }
 
-    paletteFolder = CreateFolder("Palettes");
-    scriptsFolder = CreateFolder("Scripts");
-    CreateFolder("SoundFX");
-    CreateFolder("Sprites");
+    // Create trees
+    {
+        paletteFolder = CreateFolder("Palettes");
+        scriptsFolder = CreateFolder("Scripts");
+        CreateFolder("SoundFX");
+        spritesFolder = CreateFolder("Sprites");
+    }
 
-    auto scriptsPath = SDK::GetProjectDataPath() + "/Scripts";
-    auto palettePath = SDK::GetProjectDataPath() + "/Palettes";
-    PopulateTree(scriptsFolder, scriptsPath, "*.lua", QIcon(":/icons/lua.svg"));
-    PopulateTree(paletteFolder, palettePath, "*.pal", QIcon(":/icons/sfc.svg"));
+    // Populate trees
+    {
+        auto palettePath = SDK::GetProjectDataPath() + "/Palettes";
+        PopulateTree(paletteFolder, palettePath, "*.pal", QIcon(":/icons/sfc.svg"));
 
-    connect(this, &QTreeWidget::itemDoubleClicked, this, [this, scriptsPath](QTreeWidgetItem* item, int column)
+        auto scriptsPath = SDK::GetProjectDataPath() + "/Scripts";
+        PopulateTree(scriptsFolder, scriptsPath, "*.lua", QIcon(":/icons/lua.svg"));
+
+        auto spritesPath = SDK::GetProjectDataPath() + "/Sprites";
+        PopulateTree(spritesFolder, spritesPath, "*.png", qApp->style()->standardIcon(QStyle::SP_TrashIcon));
+    }
+
+    connect(this, &QTreeWidget::itemDoubleClicked, this, [this](QTreeWidgetItem* item, int column)
     {
         if (!item || item->childCount() > 0)
         {
@@ -48,9 +59,6 @@ AssetBrowser::AssetBrowser(QWidget* parent) : QTreeWidget{parent}
             pathParts.prepend(current->text(0));
             current = current->parent();
         }
-
-        // current->text(0) would be the root label like "Scripts", we skip that
-        fullPath = scriptsPath + "/" + pathParts.join('/');
 
         qDebug() << "Double-clicked file:" << fullPath;
 

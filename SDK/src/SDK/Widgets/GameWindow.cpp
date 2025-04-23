@@ -10,6 +10,9 @@
 #include <QVBoxLayout>
 
 #include "SDK/SDL3/SDLRenderer.hpp"
+#include "Engine/Core/Engine.hpp"
+
+SDLRenderer* sdlRenderer;
 
 GameWindow::GameWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -17,20 +20,38 @@ GameWindow::GameWindow(QWidget *parent)
 {
     ui->setupUi(this);
 
-    setWindowTitle("Soulcast");
+    // Initial widget setup
+    {
+        const int statusBarHeight = 22;
+        const int menuBarHeight = 20;
+
+        setWindowTitle("Soulcast");
+        resize(SCREEN_XSIZE * Soulcast::Engine.windowScale, (SCREEN_YSIZE * Soulcast::Engine.windowScale) + statusBarHeight + menuBarHeight);
+    }
 
     // SDL setup
     {
-        auto sdlRenderer = new SDLRenderer(this);
+        sdlRenderer = new SDLRenderer(this);
         auto widget = sdlRenderer->ToWidget(this);
 
         ui->centralwidget->layout()->addWidget(widget);
+    }
+
+    // Start timer
+    {
+        connect(&timer, &QTimer::timeout, this, &GameWindow::doOneFrame);
+        timer.start(1000 / 60);
     }
 }
 
 GameWindow::~GameWindow()
 {
     delete ui;
+}
+
+void GameWindow::doOneFrame()
+{
+    sdlRenderer->DoOneFrame();
 }
 
 void GameWindow::showEvent(QShowEvent *event)

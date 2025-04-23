@@ -43,13 +43,13 @@ target_link_libraries(SoulcastEngine PRIVATE "shell32.lib")
 # SDL3
 #--------------------------------------------------------------------
 set(SDL_TEST_LIBRARY OFF)
-set(SDL_STATIC ON)
-set(SDL_SHARED OFF)
+set(SDL_STATIC OFF)
+set(SDL_SHARED ON)
 
 add_subdirectory(${SOULCAST_ENGINE_VENDOR_DIR}/SDL3)
 target_include_directories(SoulcastEngine PRIVATE ${SOULCAST_ENGINE_VENDOR_DIR}/SDL3/include)
 
-target_link_libraries(SoulcastEngine PRIVATE SDL3-static)
+target_link_libraries(SoulcastEngine PRIVATE SDL3-shared)
 
 #--------------------------------------------------------------------
 # spng
@@ -87,7 +87,7 @@ target_link_libraries(SoulcastEngine PRIVATE efsw)
 #--------------------------------------------------------------------
 # Folder structuring in Visual Studio
 #--------------------------------------------------------------------
-set_target_properties(SDL3-static PROPERTIES FOLDER "Vendor/Engine")
+set_target_properties(SDL3-shared PROPERTIES FOLDER "Vendor/Engine")
 set_target_properties(SDL_uclibc PROPERTIES FOLDER "Vendor/Engine")
 set_target_properties(spng PROPERTIES FOLDER "Vendor/Engine")
 

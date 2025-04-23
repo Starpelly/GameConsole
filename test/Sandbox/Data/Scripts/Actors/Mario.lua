@@ -40,7 +40,9 @@ function mario:update()
     end
 
     self.x = self.x + self.vel_x;
-    camX = math.floor(self.x + 0.5) - 100;
+    -- camX = math.floor(self.x + 0.5) - 100;
+
+    camX = camX - 1
 end
 
 function mario:render()

@@ -20,14 +20,17 @@ bool SoulcastEngine::Init()
 	}
 
 	initialized = true;
-	running = true;
+    running = true;
 	mode = ENGINE_MAINGAME;
 
 #if SOULCAST_USING_SDL3
-	SDL_Init(SDL_INIT_EVENTS);
+    if (!Engine.windowContained)
+    {
+        SDL_Init(SDL_INIT_EVENTS);
+    }
 
-	SDL_SetHint(SDL_HINT_RENDER_VSYNC, Engine.vsync ? "1" : "0");
-	SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
+    SDL_SetHint(SDL_HINT_RENDER_VSYNC, Engine.vsync ? "1" : "0");
+    SDL_SetHint(SDL_HINT_ORIENTATIONS, "LandscapeLeft LandscapeRight");
 
 	uint8 flags = 0;
 
@@ -46,6 +49,14 @@ bool SoulcastEngine::Init()
 #endif
 
 	flags |= SDL_WINDOW_RESIZABLE;
+    if (Engine.windowContained)
+    {
+        flags |= SDL_WINDOW_HIDDEN;
+    }
+    if (Engine.borderless)
+    {
+        flags |= SDL_WINDOW_BORDERLESS;
+    }
 
 	int32 windowWidth = SCREEN_XSIZE * Engine.windowScale;
 	int32 windowHeight = SCREEN_YSIZE * Engine.windowScale;
@@ -107,7 +118,7 @@ bool SoulcastEngine::Init()
 	}
 
 	SDL_SetWindowPosition(Engine.window, SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED);
-	SDL_SetWindowResizable(Engine.window, !Engine.debugMode);
+    // SDL_SetWindowResizable(Engine.window, !Engine.debugMode);
 
 	SDL_DisplayID winID = SDL_GetDisplayForWindow(Engine.window);
 	const SDL_DisplayMode* disp = SDL_GetCurrentDisplayMode(winID);
@@ -126,6 +137,10 @@ bool SoulcastEngine::Init()
 	PPU::Init();
 	ScriptingEngine::Init();
 
+    Engine.targetFreq = SDL_GetPerformanceFrequency() / Engine.refreshRate;
+    Engine.curTicks = 0;
+    Engine.prevTicks = 0;
+
 	return 0;
 }
 
@@ -142,105 +157,105 @@ static void loadPCMFile(int test)
 
 void SoulcastEngine::Run()
 {	
-	uint64 targetFreq = SDL_GetPerformanceFrequency() / Engine.refreshRate;
-	uint64 curTicks = 0;
-	uint64 prevTicks = 0;
-
-	bool masterPaused = false;
-
-	// TestGame testGame;
-
 	// loadPCMFile(1);
 
 	while (Engine.running)
 	{
-		if (!Engine.vsync)
-		{
-			curTicks = SDL_GetPerformanceCounter();
-			if (curTicks < prevTicks + targetFreq)
-				continue;
-			prevTicks = curTicks;
-		}
+        DoOneFrame();
+	}
+}
 
-		Engine.time = SDL_GetTicks() / 1000.0;
+void SoulcastEngine::DoOneFrame()
+{
+    if (!Engine.vsync)
+    {
+        curTicks = SDL_GetPerformanceCounter();
+        if (curTicks < prevTicks + targetFreq)
+            return;
+        prevTicks = curTicks;
+    }
 
-		Engine.running = ProcessEvents();
+    Engine.time = SDL_GetTicks() / 1000.0;
 
-		PPU::SetActiveScreen(&PPU::gameScreen);
-
-		for (int s = 0; s < Engine.gameSpeed; ++s)
-		{
-			Input::Process();
-
-			if (Engine.debugMode)
-			{
-				if (Input::IsButtonPressed(INPUT_UP))
-				{
-					debug.palette++;
-				}
-				if (Input::IsButtonPressed(INPUT_DOWN))
-				{
-					debug.palette--;
-				}
-				if (debug.palette < 0)
-					debug.palette = 0;
-				if (debug.palette >= PALETTE_BANK_COUNT)
-					debug.palette = PALETTE_BANK_COUNT;
-			}
-
-			if (!masterPaused || Engine.frameStep)
-			{
-				switch (Engine.mode)
-				{
-				case ENGINE_MAINGAME:
-					// testGame.Update();
-					// testGame.Render();
-
-					ScriptingEngine::UpdateScripts();
-					ScriptingEngine::RenderScripts();
-
-					// auto mousePan = Math::lerp(-1, 1, ((float)Input::mouseX) / (SCREEN_XSIZE * Engine.windowScale));
-					// auto mouseFreq = -(Input::mouseY - (SCREEN_YSIZE * Engine.windowScale));
-					// AudioDevice::SetPCMFreq(OCTAVE_BASE_FREQUENCY * pow(d12thRootOf2, 12));
-					// AudioDevice::SetPCMPan(0.0f);
-					break;
-
-				case ENGINE_EXITGAME:
-					Engine.running = false;
-					break;
-
-				case ENGINE_PAUSE:
-				case ENGINE_WAIT:
-					break;
-
-				default: break;
-				}
-			}
-		}
-
-		// Render debug stuff (if we should)
-		if (Engine.debugMode)
-		{
-			PPU::SetActiveScreen(&PPU::debugScreen);
-			PPU::ClearScreen(RGB888_TO_RGB565(0, 8, 133));
-
-			for (int i = 0; i < PALETTE_BANK_COUNT; i++)
-			{
-				PPU::RenderPalette(i, i * 24);
-			}
-		}
-
-		// Render PPU output to physical screen!
-		PPU::Present();
-
-#if SOULCAST_USING_OPENGL && SOULCAST_USING_SDL3
-		SDL_GL_SwapWindow(Engine.window);
+#if SOULCAST_USING_SDL3
+    SDL_Event event;
+    while (SDL_PollEvent(&event))
+    {
+        Engine.running = ProcessEvent(event);
+    }
 #endif
 
-		Engine.frameStep = false;
-	}
+    PPU::SetActiveScreen(&PPU::gameScreen);
 
-	Release();
+    for (int s = 0; s < Engine.gameSpeed; ++s)
+    {
+        Input::Process();
+
+        if (Engine.debugMode)
+        {
+            if (Input::IsButtonPressed(INPUT_UP))
+            {
+                debug.palette++;
+            }
+            if (Input::IsButtonPressed(INPUT_DOWN))
+            {
+                debug.palette--;
+            }
+            if (debug.palette < 0)
+                debug.palette = 0;
+            if (debug.palette >= PALETTE_BANK_COUNT)
+                debug.palette = PALETTE_BANK_COUNT;
+        }
+
+        if (!masterPaused || Engine.frameStep)
+        {
+            switch (Engine.mode)
+            {
+            case ENGINE_MAINGAME:
+                ScriptingEngine::UpdateScripts();
+                ScriptingEngine::RenderScripts();
+
+                // auto mousePan = Math::lerp(-1, 1, ((float)Input::mouseX) / (SCREEN_XSIZE * Engine.windowScale));
+                // auto mouseFreq = -(Input::mouseY - (SCREEN_YSIZE * Engine.windowScale));
+                // AudioDevice::SetPCMFreq(OCTAVE_BASE_FREQUENCY * pow(d12thRootOf2, 12));
+                // AudioDevice::SetPCMPan(0.0f);
+
+                PPU::DrawRectangle(Input::mouseX, Input::mouseY, 32, 32, 0xFFFF);
+                break;
+
+            case ENGINE_EXITGAME:
+                Engine.running = false;
+                break;
+
+            case ENGINE_PAUSE:
+            case ENGINE_WAIT:
+                break;
+
+            default: break;
+            }
+        }
+    }
+
+    // Render debug stuff (if we should)
+    if (Engine.debugMode)
+    {
+        PPU::SetActiveScreen(&PPU::debugScreen);
+        PPU::ClearScreen(RGB888_TO_RGB565(0, 8, 133));
+
+        for (int i = 0; i < PALETTE_BANK_COUNT; i++)
+        {
+            PPU::RenderPalette(i, i * 24);
+        }
+    }
+
+    // Render PPU output to physical screen!
+    PPU::Present();
+
+#if SOULCAST_USING_OPENGL && SOULCAST_USING_SDL3
+    SDL_GL_SwapWindow(Engine.window);
+#endif
+
+    Engine.frameStep = false;
 }
 
 void SoulcastEngine::Release()
@@ -259,34 +274,35 @@ void SoulcastEngine::Release()
 	SDL_DestroyRenderer(Engine.renderer);
 	SDL_DestroyWindow(Engine.window);
 
-	SDL_Quit();
+    if (!Engine.windowContained)
+    {
+        SDL_Quit();
+    }
 #endif
 }
 
-bool SoulcastEngine::ProcessEvents()
-{
 #if SOULCAST_USING_SDL3
-	SDL_Event event;
-	while (SDL_PollEvent(&event))
-	{
-		switch (event.type)
-		{
-		case SDL_EVENT_TERMINATING:
-			Engine.mode = ENGINE_EXITGAME; return false;
-		case SDL_EVENT_QUIT:
-			Engine.mode = ENGINE_EXITGAME; return false;
-
-		case SDL_EVENT_KEY_DOWN:
-			auto key = event.key.scancode;
-
-			if (key == SDL_SCANCODE_R) // I'm lazy
-			{
-				ScriptingEngine::Reset();
-			}
-			break;
-		}
-	}
+bool SoulcastEngine::ProcessEvent(const SDL_Event& event)
+#else
+bool SoulcastEngine::ProcessEvent()
 #endif
+{
+    switch (event.type)
+    {
+    case SDL_EVENT_TERMINATING:
+        Engine.mode = ENGINE_EXITGAME; return false;
+    case SDL_EVENT_QUIT:
+        Engine.mode = ENGINE_EXITGAME; return false;
+
+    case SDL_EVENT_KEY_DOWN:
+        auto key = event.key.scancode;
+
+        if (key == SDL_SCANCODE_R) // I'm lazy
+        {
+            ScriptingEngine::Reset();
+        }
+        break;
+    }
 
 	return true;
 }

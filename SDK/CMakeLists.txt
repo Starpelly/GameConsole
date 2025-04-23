@@ -40,6 +40,7 @@ set(SOULCAST_SDK_RESOURCES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/resources)
 file(GLOB_RECURSE PROJECT_SOURCES
     ${SOULCAST_SDK_SOURCE_DIR}/*.cpp
     ${SOULCAST_SDK_SOURCE_DIR}/*.hpp
+    ${SOULCAST_SDK_SOURCE_DIR}/*.ui
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -110,16 +111,6 @@ if(WIN32)
 endif()
 
 #--------------------------------------------------------------------
-# SDL3
-#--------------------------------------------------------------------
-set(SDL_TEST_LIBRARY OFF)
-set(SDL_STATIC ON)
-set(SDL_SHARED OFF)
-
-target_include_directories(SoulcastSDK PRIVATE ${CMAKE_SOURCE_DIR}/Engine/vendor/SDL3/include)
-target_link_libraries(SoulcastSDK PRIVATE SDL3-static)
-
-#--------------------------------------------------------------------
 # External libraries
 #--------------------------------------------------------------------
 add_subdirectory(${SOULCAST_SDK_VENDOR_DIR}/phantom)
@@ -131,6 +122,17 @@ target_link_libraries(SoulcastSDK PRIVATE QtPropertyBrowser)
 add_subdirectory(${SOULCAST_SDK_VENDOR_DIR}/QCodeEditor)
 target_link_libraries(SoulcastSDK PRIVATE QCodeEditor)
 target_include_directories(SoulcastSDK PRIVATE ${SOULCAST_SDK_VENDOR_DIR}/QCodeEditor/include)
+
+#--------------------------------------------------------------------
+# SDL3
+#--------------------------------------------------------------------
+set(SDL_TEST_LIBRARY OFF)
+set(SDL_STATIC OFF)
+set(SDL_SHARED ON)
+
+target_include_directories(SoulcastSDK PRIVATE ${CMAKE_SOURCE_DIR}/Engine/vendor/SDL3/include)
+
+target_link_libraries(SoulcastSDK PRIVATE SDL3-shared)
 
 #--------------------------------------------------------------------
 # Folder structuring in Visual Studio

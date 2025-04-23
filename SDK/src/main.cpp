@@ -6,7 +6,7 @@
 
 int main(int argc, char *argv[])
 {
-    bool sdl_initialized = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
+    bool sdl_initialized = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS);
     if(!sdl_initialized) sdl_initialized = SDL_Init(SDL_INIT_VIDEO);
     if(!sdl_initialized) return -1;
 

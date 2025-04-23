@@ -22,7 +22,9 @@ public:
 
     auto OpenCodeEditor(const QString& path) -> void;
 
-    auto OpenGamePlaytest() -> void;
+    auto OpenPlaytest() -> void;
+    auto OnPlaytestClose() -> void;
+    auto SetToolsEnabled(bool val) -> void;
 private:
     void onCloseTab(int index);
 
