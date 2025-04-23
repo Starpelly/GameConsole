@@ -9,10 +9,11 @@
 
 #include <QVBoxLayout>
 
-#include "SDK/SDL3/SDLRenderer.hpp"
 #include "Engine/Core/Engine.hpp"
 
-SDLRenderer* sdlRenderer;
+// #include "SDK/SDL3/SDLRenderer.hpp"
+// SDLRenderer* sdlRenderer;
+#include "SDK/SDL3/SDLWindow.hpp"
 
 GameWindow::GameWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -31,9 +32,10 @@ GameWindow::GameWindow(QWidget *parent)
 
     // SDL setup
     {
-        sdlRenderer = new SDLRenderer(this);
-        auto widget = sdlRenderer->ToWidget(this);
+        // sdlRenderer = new SDLRenderer(this);
+        // auto widget = sdlRenderer->ToWidget(this);
 
+        auto widget = new SDLWindow(this);
         ui->centralwidget->layout()->addWidget(widget);
     }
 
@@ -51,7 +53,7 @@ GameWindow::~GameWindow()
 
 void GameWindow::doOneFrame()
 {
-    sdlRenderer->DoOneFrame();
+    // sdlRenderer->DoOneFrame();
 }
 
 void GameWindow::showEvent(QShowEvent *event)

@@ -1,5 +1,7 @@
 #include "SDLWindow.hpp"
 
+#include "Engine/Core/Engine.hpp"
+
 SDLWindow::SDLWindow(QWidget* parent) : QWidget(parent), m_Timer(this)
 {
     // Turn off double buffering for this widget. Double buffering
@@ -21,13 +23,15 @@ SDLWindow::SDLWindow(QWidget* parent) : QWidget(parent), m_Timer(this)
      */
     setUpdatesEnabled(false);
 
-    connect(&m_Timer, SIGNAL(timeout()), this, SLOT(Render()));
-    m_Timer.start(1000 / 60);
+    initialize();
+
+    // connect(&m_Timer, SIGNAL(timeout()), this, SLOT(render()));
+    // m_Timer.start(1000 / 60);
 }
 
 SDLWindow::~SDLWindow()
 {
-    // Shutdown();
+    shutdown();
 }
 
 void SDLWindow::initialize()
@@ -39,13 +43,23 @@ void SDLWindow::initialize()
         auto properties = SDL_CreateProperties();
         SDL_SetPointerProperty(properties, SDL_PROP_WINDOW_CREATE_WIN32_HWND_POINTER, winID);
 
+        m_Window = SDL_CreateWindowWithProperties(properties);
+
+        Soulcast::Engine.debugMode = false;
+        Soulcast::Engine.windowContained = true;
+        Soulcast::Engine.Init(m_Window);
+
         SDL_DestroyProperties(properties);
     }
+
+    QMetaObject::invokeMethod(this, "render", Qt::QueuedConnection);
 }
 
 void SDLWindow::shutdown()
 {
     m_Timer.stop();
+
+    Soulcast::Engine.Release();
 }
 
 // ===============
@@ -54,4 +68,23 @@ void SDLWindow::shutdown()
 
 void SDLWindow::render()
 {
+    if (!Soulcast::Engine.initialized)
+        return;
+
+    Soulcast::Engine.DoOneFrame();
+
+    // Schedule the next frame as soon as possible
+    QMetaObject::invokeMethod(this, "render", Qt::QueuedConnection);
+}
+
+// Override default system paint engine to remove flickering
+QPaintEngine* SDLWindow::paintEngine() const
+{
+    return reinterpret_cast<QPaintEngine*>(0);
+}
+
+// https://stackoverflow.com/questions/18160051/intercepting-tab-key-press-to-manage-focus-switching-manually
+bool SDLWindow::focusNextPrevChild(bool next)
+{
+    return false;
 }

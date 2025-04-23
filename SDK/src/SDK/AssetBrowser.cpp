@@ -60,6 +60,8 @@ AssetBrowser::AssetBrowser(QWidget* parent) : QTreeWidget{parent}
             current = current->parent();
         }
 
+        fullPath = item->data(0, Qt::UserRole).toString();
+
         qDebug() << "Double-clicked file:" << fullPath;
 
         if (item->childCount() == 0 && item->text(0).endsWith(".lua", Qt::CaseInsensitive))
@@ -123,5 +125,6 @@ void AssetBrowser::PopulateTree(QTreeWidgetItem* parentItem, const QString& fold
         fileItem->setText(0, fileInfo.fileName());
         fileItem->setIcon(0, icon);
         fileItem->setSizeHint(0, QSize(100, 20));
+        fileItem->setData(0, Qt::UserRole, filePath);
     }
 }

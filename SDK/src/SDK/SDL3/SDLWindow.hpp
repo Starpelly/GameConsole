@@ -20,7 +20,12 @@ private:
     void shutdown();
 
     QTimer m_Timer;
+    SDL_Window* m_Window;
 
 private slots:
     void render();
+
+private:
+    QPaintEngine* paintEngine() const override;
+    bool focusNextPrevChild(bool next) override;
 };

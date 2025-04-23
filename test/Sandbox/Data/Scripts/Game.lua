@@ -22,7 +22,7 @@ function game_render()
         for x = 0, SCREEN_XSIZE - 1 do
             -- Create a red gradient from left (0) to right (31)
             local red = math.floor((x * 31) / SCREEN_XSIZE)
-            local color = (red << 11) -- red in RGB565 format (bits 11–15)
+            local color = (red << 11) -- red in RGB565 format (bits 11?15)
 
             local pixel_index = y * SCREEN_XSIZE + x
             local addr = FRAMEBUFFER_START + pixel_index * 2

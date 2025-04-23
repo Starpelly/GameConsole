@@ -6,7 +6,7 @@ using namespace Soulcast;
 
 SoulcastEngine Soulcast::Engine = SoulcastEngine();
 
-bool SoulcastEngine::Init()
+bool SoulcastEngine::Init(SDL_Window* window)
 {
 	auto workingDirectory = "D:/Soulcast/test/Sandbox/Data";
 
@@ -18,10 +18,6 @@ bool SoulcastEngine::Init()
 	{
 		return false;
 	}
-
-	initialized = true;
-    running = true;
-	mode = ENGINE_MAINGAME;
 
 #if SOULCAST_USING_SDL3
     if (!Engine.windowContained)
@@ -66,7 +62,14 @@ bool SoulcastEngine::Init()
 		windowWidth += DEBUG_XSIZE * Engine.windowScale;
 	}
 
-	Engine.window = SDL_CreateWindow("Soulcast", windowWidth, windowHeight, SDL_WINDOW_HIGH_PIXEL_DENSITY | flags);
+    if (window == nullptr)
+    {
+        Engine.window = SDL_CreateWindow("Soulcast", windowWidth, windowHeight, SDL_WINDOW_HIGH_PIXEL_DENSITY | flags);
+    }
+    else
+    {
+        Engine.window = window;
+    }
 
 	if (!Engine.window)
 	{
@@ -131,6 +134,10 @@ bool SoulcastEngine::Init()
 		printf("ERROR: %s", SDL_GetError());
 	}
 #endif
+
+    Engine.initialized = true;
+    Engine.running = true;
+    Engine.mode = ENGINE_MAINGAME;
 
 	AudioDevice::Init();
 	Input::Init();
@@ -220,7 +227,7 @@ void SoulcastEngine::DoOneFrame()
                 // AudioDevice::SetPCMFreq(OCTAVE_BASE_FREQUENCY * pow(d12thRootOf2, 12));
                 // AudioDevice::SetPCMPan(0.0f);
 
-                PPU::DrawRectangle(Input::mouseX, Input::mouseY, 32, 32, 0xFFFF);
+                PPU::DrawRectangle(Input::mouseX / Engine.windowScale, Input::mouseY / Engine.windowScale, 32, 32, 0xFFFF);
                 break;
 
             case ENGINE_EXITGAME:

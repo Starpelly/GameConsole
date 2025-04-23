@@ -43,7 +43,7 @@ MainWindow::MainWindow(QWidget *parent)
         });
     }
 
-    OpenCodeEditor(SDK::GetProjectDataPath() + "Scripts/Game.lua");
+    OpenCodeEditor(SDK::GetProjectDataPath() + "Scripts/Test.lua");
 }
 
 MainWindow::~MainWindow()

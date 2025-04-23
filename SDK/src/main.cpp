@@ -4,17 +4,14 @@
 
 #include "SDK/MainWindow.hpp"
 
-int main(int argc, char *argv[])
+static void ApplyStyle()
 {
-    bool sdl_initialized = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS);
-    if(!sdl_initialized) sdl_initialized = SDL_Init(SDL_INIT_VIDEO);
-    if(!sdl_initialized) return -1;
+    PhantomStyle* style = new PhantomStyle();
+    QApplication::setStyle(style);
+}
 
-    QApplication a(argc, argv);
-
-    PhantomStyle style;
-    QApplication::setStyle(&style);
-
+static void ApplyPalette()
+{
     QPalette darkPal;
     darkPal.setColor(QPalette::Window, QColor(0xFF292929));
     darkPal.setColor(QPalette::Base, QColor(0xFF232323));
@@ -38,6 +35,18 @@ int main(int argc, char *argv[])
     darkPal.setColor(QPalette::Shadow, Qt::black);
 
     QApplication::setPalette(darkPal);
+}
+
+int main(int argc, char *argv[])
+{
+    bool sdl_initialized = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_EVENTS);
+    if(!sdl_initialized) sdl_initialized = SDL_Init(SDL_INIT_VIDEO);
+    if(!sdl_initialized) return -1;
+
+    QApplication a(argc, argv);
+
+    ApplyStyle();
+    ApplyPalette();
 
     MainWindow w;
     w.show();

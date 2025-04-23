@@ -18,10 +18,12 @@ public:
     ~CodeEditor();
 
     auto OpenFile(const QString& filePath) -> void;
+    auto SaveFile() -> void;
 
 private:
     Ui::CodeEditor *ui;
     QCodeEditor* editor;
+    QString filePath;
 };
 
 #endif // CODEEDITOR_HPP
