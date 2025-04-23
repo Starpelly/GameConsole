@@ -9,8 +9,8 @@ set(CMAKE_AUTORCC ON)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets)
-find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets)
+find_package(QT NAMES Qt6 Qt5 REQUIRED COMPONENTS Widgets WebEngineWidgets)
+find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets WebEngineWidgets)
 
 set(SOULCAST_SDK_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(SOULCAST_SDK_VENDOR_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vendor)
@@ -23,6 +23,11 @@ set(PROJECT_SOURCES
     ${SOULCAST_SDK_SOURCE_DIR}/mainwindow.ui
     ${SOULCAST_SDK_SOURCE_DIR}/AssetBrowser.cpp
     ${SOULCAST_SDK_SOURCE_DIR}/AssetBrowser.hpp
+    ${SOULCAST_SDK_SOURCE_DIR}/CodeEditor.hpp
+    ${SOULCAST_SDK_SOURCE_DIR}/CodeEditor.cpp
+    ${SOULCAST_SDK_SOURCE_DIR}/codeeditor.ui
+    ${SOULCAST_SDK_SOURCE_DIR}/SDK.hpp
+    ${SOULCAST_SDK_SOURCE_DIR}/SDK.cpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -49,7 +54,7 @@ else()
     endif()
 endif()
 
-target_link_libraries(SoulcastSDK PRIVATE Qt${QT_VERSION_MAJOR}::Widgets)
+target_link_libraries(SoulcastSDK PRIVATE Qt${QT_VERSION_MAJOR}::Widgets Qt${QT_VERSION_MAJOR}::WebEngineWidgets)
 
 # Qt for iOS sets MACOSX_BUNDLE_GUI_IDENTIFIER automatically since Qt 6.1.
 # If you are developing for iOS or macOS you should consider setting an

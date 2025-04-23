@@ -8,6 +8,7 @@
 #include <cmath>
 #include <vector>
 #include <filesystem>
+#include <sstream>
 
 // ==============
 // Standard Types

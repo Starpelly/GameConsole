@@ -11,7 +11,7 @@ public:
 
 private:
     auto CreateFolder(const QString& name) -> QTreeWidgetItem*;
-    auto PopulateTree() -> void;
+    auto PopulateTree(QTreeWidgetItem* parentItem, const QString& folderPath, const char* extension, const QIcon& icon) -> void;
 };
 
 #endif // ASSETBROWSER_H

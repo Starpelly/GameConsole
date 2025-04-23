@@ -15,5 +15,9 @@
         <file>icons/palette.png</file>
         <file>fonts/JetBrainsMono[wght].ttf</file>
         <file>trinket.xml</file>
+        <file>fonts/IndicateMono-Regular.otf</file>
+        <file>fonts/Consolas.ttf</file>
+        <file>icons/lua.svg</file>
+        <file>icons/sfc.svg</file>
     </qresource>
 </RCC>

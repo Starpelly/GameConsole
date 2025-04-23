@@ -10,6 +10,9 @@ namespace Soulcast
 
 	#define PCM_CHANNEL_SNAPSHOTS (32)
 
+	#define OCTAVE_BASE_FREQUENCY 110.0
+	#define d12thRootOf2 pow(2.0, 1.0 / 12.0)
+
 	enum class WaveType
 	{
 		Square,

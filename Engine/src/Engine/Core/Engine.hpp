@@ -108,6 +108,7 @@ namespace Soulcast
 
 		int gameSpeed				= 1;
 		bool frameStep				= false;
+		double time					= 0.0;
 
 		SoundChip soundChip;
 		PPU ppu;

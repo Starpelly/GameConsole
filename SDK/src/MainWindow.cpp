@@ -1,79 +1,25 @@
 #include "MainWindow.hpp"
 #include "./ui_mainwindow.h"
 
-#include <QSyntaxStyle>
-#include <QCodeEditor>
-#include <QLuaCompleter>
-#include <QLuaHighlighter>
-
-#include <QTextStream>
+#include <QDir>
 
 #include "AssetBrowser.hpp"
+#include "CodeEditor.hpp"
 
-#define MIXIN_OPEN_MAIN_TAB(tool, title, widget)\
-auto tabName = std::string(tool);\
-    tabName.append(" - ");\
-    tabName.append(title);\
-    ui->tabWidget->addTab(widget, QString::fromStdString(tabName));
+#include "SDK.hpp"
 
-QString readFileToString(const QString &filePath) {
-    QFile file(filePath);
-    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
-        return QString(); // or handle the error as needed
-    }
-
-    QTextStream in(&file);
-    in.setCodec("UTF-8"); // optional, ensures proper encoding
-    QString content = in.readAll();
-    file.close();
-    return content;
-}
-
-void testCodeEditor(MainWindow* thiss, Ui::MainWindow* ui)
+static MainWindow* g_MainWindow = nullptr;
+MainWindow* GetMainWindow()
 {
-    auto codeEditor = new QCodeEditor(thiss);
-    MIXIN_OPEN_MAIN_TAB("Code Editor", "game.lua", codeEditor);
-
-    QFile fl(":/trinket.xml");
-
-    if (!fl.open(QIODevice::ReadOnly))
-    {
-        return;
-    }
-
-    auto style = new QSyntaxStyle(thiss);
-    if (!style->load(fl.readAll()))
-    {
-    }
-
-    // Load the font from a file
-    int fontId = QFontDatabase::addApplicationFont(":/fonts/JetBrainsMono[wght].ttf");
-    if (fontId == -1) {
-        qWarning("Failed to load font!");
-    }
-
-    // Get the family name of the loaded font
-    QStringList fontFamilies = QFontDatabase::applicationFontFamilies(fontId);
-    if (fontFamilies.isEmpty()) {
-        qWarning("No font families found!");
-    }
-
-    QString fontFamily = fontFamilies.first();
-    QFont font(fontFamily, 11);
-
-    codeEditor->setSyntaxStyle(style);
-    codeEditor->setCompleter(new QLuaCompleter(thiss));
-    codeEditor->setHighlighter(new QLuaHighlighter);
-
-    codeEditor->setFont(font);
-
-    codeEditor->setText(readFileToString("D:/Soulcast/test/Sandbox/Data/Scripts/game.lua"));
+    return g_MainWindow;
 }
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
+    g_MainWindow = this;
+
     ui->setupUi(this);
 
     // Asset browser
@@ -83,11 +29,48 @@ MainWindow::MainWindow(QWidget *parent)
         ui->assetTreeLayout->addWidget(assetBrowser);
     }
 
-    testCodeEditor(this, ui);
-    // ui->tabWidget->addTab()
+    // Tab setup
+    {
+        ui->tabWidget->setTabsClosable(true);
+        connect(ui->tabWidget, &QTabWidget::tabCloseRequested, this, &MainWindow::onCloseTab);
+    }
+
+    OpenCodeEditor(SDK::GetProjectDataPath() + "Scripts/Game.lua");
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::OpenTab(const QString& toolName, const QString& title, QWidget* widget)
+{
+    auto tabName = toolName;
+    tabName.append(" - ");
+    tabName.append(title);
+    ui->tabWidget->addTab(widget, tabName);
+}
+
+void MainWindow::OpenTab(const QString &toolName, const QString &title, QWidget *widget, const QIcon &icon)
+{
+    auto tabName = toolName;
+    tabName.append(" - ");
+    tabName.append(title);
+    ui->tabWidget->addTab(widget, icon, tabName);
+}
+
+void MainWindow::OpenCodeEditor(const QString &path)
+{
+    auto editor = new CodeEditor();
+    editor->OpenFile(path);
+
+    QString relativePath = QDir(SDK::GetProjectDataPath()).relativeFilePath(path);
+    OpenTab("Code Editor", relativePath, editor, QIcon(":/icons/lua.svg"));
+}
+
+void MainWindow::onCloseTab(int index)
+{
+    auto widget = ui->tabWidget->widget(index);
+    ui->tabWidget->removeTab(index);
+    delete widget;
 }

@@ -129,6 +129,17 @@ bool SoulcastEngine::Init()
 	return 0;
 }
 
+static void loadPCMFile(int test)
+{
+	std::ostringstream filename;
+	filename << "SoundFX/programmable_wave_samples/";
+	filename << std::setw(2) << std::setfill('0') << test;
+	filename << ".pcm";
+	Engine.soundChip.pcm = load4BitPCMFile(filename.str().c_str());
+
+	std::cout << "Loading sample " << filename.str() << std::endl;
+}
+
 void SoulcastEngine::Run()
 {	
 	uint64 targetFreq = SDL_GetPerformanceFrequency() / Engine.refreshRate;
@@ -139,6 +150,8 @@ void SoulcastEngine::Run()
 
 	// TestGame testGame;
 
+	// loadPCMFile(1);
+
 	while (Engine.running)
 	{
 		if (!Engine.vsync)
@@ -148,6 +161,8 @@ void SoulcastEngine::Run()
 				continue;
 			prevTicks = curTicks;
 		}
+
+		Engine.time = SDL_GetTicks() / 1000.0;
 
 		Engine.running = ProcessEvents();
 
@@ -183,6 +198,11 @@ void SoulcastEngine::Run()
 
 					ScriptingEngine::UpdateScripts();
 					ScriptingEngine::RenderScripts();
+
+					// auto mousePan = Math::lerp(-1, 1, ((float)Input::mouseX) / (SCREEN_XSIZE * Engine.windowScale));
+					// auto mouseFreq = -(Input::mouseY - (SCREEN_YSIZE * Engine.windowScale));
+					// AudioDevice::SetPCMFreq(OCTAVE_BASE_FREQUENCY * pow(d12thRootOf2, 12));
+					// AudioDevice::SetPCMPan(0.0f);
 					break;
 
 				case ENGINE_EXITGAME:

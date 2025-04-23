@@ -17,7 +17,18 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
+    auto OpenTab(const QString& toolName, const QString& title, QWidget* widget) -> void;
+    auto OpenTab(const QString& toolName, const QString& title, QWidget* widget, const QIcon& icon) -> void;
+
+    auto OpenCodeEditor(const QString& path) -> void;
+
+private:
+    void onCloseTab(int index);
+
 private:
     Ui::MainWindow *ui;
 };
+
+MainWindow* GetMainWindow();
+
 #endif // MAINWINDOW_HPP

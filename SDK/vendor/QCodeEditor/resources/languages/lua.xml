@@ -16,6 +16,7 @@
         <name>then</name>
         <name>until</name>
         <name>while</name>
+        <name>require</name>
     </section>
     <section name="Type">
         <name>local</name>

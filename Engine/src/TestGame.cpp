@@ -44,17 +44,6 @@ TestGame::~TestGame()
 {
 }
 
-static void loadPCMFile(int test)
-{
-	std::ostringstream filename;
-	filename << "SoundFX/programmable_wave_samples/";
-	filename << std::setw(2) << std::setfill('0') << test;
-	filename << ".pcm";
-	Engine.soundChip.pcm = load4BitPCMFile(filename.str().c_str());
-
-	std::cout << "Loading sample " << filename.str() << std::endl;
-}
-
 void TestGame::Update()
 {
 	if (Input::IsButtonDown(INPUT_RIGHT))
