@@ -6,7 +6,8 @@ function game_init()
     player = mario:new(64, 168)
 end
 
---[[HOTLOADABLE]]
+#hotload
+
 function game_update()
     player:update()
 end
@@ -47,4 +48,5 @@ function game_render()
 
     neko.drawPixel(0, 0, 255, 0, 255)
 end
---[[END]]
+
+#end_hotload

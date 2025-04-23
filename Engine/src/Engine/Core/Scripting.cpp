@@ -204,11 +204,11 @@ static std::string extractHotloadChunk(const std::string& filePath)
 
 	while (std::getline(file, line))
 	{
-		if (line.find("--[[HOTLOADABLE]]") != std::string::npos)
+		if (line.find("#hotload") != std::string::npos)
 		{
 			inHotload = true;
 		}
-		else if (line.find("--[[END]]") != std::string::npos)
+		else if (line.find("#end_hotload") != std::string::npos)
 		{
 			inHotload = false;
 		}

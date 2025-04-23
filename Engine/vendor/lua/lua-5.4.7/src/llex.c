@@ -454,6 +454,21 @@ static int llex (LexState *ls, SemInfo *seminfo) {
         next(ls);
         break;
       }
+      case '#': { // Pelly: Completely ignored, used for compiler commands?
+          if (ls->current == '#') {
+              if (ls->linenumber == 1) {
+                  /* shebang on first line */
+                  while (!currIsNewline(ls) && ls->current != EOZ)
+                      next(ls);
+              }
+              else {
+                  /* skip line starting with # */
+                  while (!currIsNewline(ls) && ls->current != EOZ)
+                      next(ls);
+              }
+              return llex(ls, seminfo);  /* try again */
+          }
+      }
       case '-': {  /* '-' or '--' (comment) */
         next(ls);
         if (ls->current != '-') return '-';

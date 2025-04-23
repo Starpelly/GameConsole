@@ -12,7 +12,7 @@ function mario:init(x, y)
     self.anim_frame = 0;
 end
 
---[[HOTLOADABLE]]
+#hotload
 
 function mario:update()
 
@@ -42,7 +42,7 @@ function mario:update()
     self.x = self.x + self.vel_x;
     -- camX = math.floor(self.x + 0.5) - 100;
 
-    camX = camX - 1
+    camX = camX + 0;
 end
 
 function mario:render()
@@ -51,4 +51,5 @@ function mario:render()
     local sprite_frame = math.floor(self.anim_frame);
     soul.drawSpriteRegion(marioSprite, math.floor(self.x + 0.5), math.floor(self.y + 0.5), 16 * sprite_frame, 0, 16, 32, self.sprite_flip);
 end
---[[END]]
+
+#end_hotload

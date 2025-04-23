@@ -56,7 +56,8 @@ void MainWindow::OpenTab(const QString& toolName, const QString& title, QWidget*
     auto tabName = toolName;
     tabName.append(" - ");
     tabName.append(title);
-    ui->tabWidget->addTab(widget, tabName);
+    auto index = ui->tabWidget->addTab(widget, tabName);
+    ui->tabWidget->setCurrentIndex(index);
 }
 
 void MainWindow::OpenTab(const QString &toolName, const QString &title, QWidget *widget, const QIcon &icon)
@@ -64,7 +65,8 @@ void MainWindow::OpenTab(const QString &toolName, const QString &title, QWidget 
     auto tabName = toolName;
     tabName.append(" - ");
     tabName.append(title);
-    ui->tabWidget->addTab(widget, icon, tabName);
+    auto index = ui->tabWidget->addTab(widget, icon, tabName);
+    ui->tabWidget->setCurrentIndex(index);
 }
 
 void MainWindow::OpenCodeEditor(const QString &path)

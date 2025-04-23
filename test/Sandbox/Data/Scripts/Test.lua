@@ -1,4 +1,4 @@
---[[HOTLOADABLE]]
+#hotload
 
 function dont_comment()
 
@@ -10,4 +10,4 @@ function please_comment()
 end
 --]]
 
---[[END]]
+#end_hotload
