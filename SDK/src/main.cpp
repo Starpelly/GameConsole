@@ -4,8 +4,14 @@
 
 #include <QApplication>
 
+#include <SDL3/SDL.h>
+
 int main(int argc, char *argv[])
 {
+    bool sdl_initialized = SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO);
+    if(!sdl_initialized) sdl_initialized = SDL_Init(SDL_INIT_VIDEO);
+    if(!sdl_initialized) return -1;
+
     QApplication a(argc, argv);
 
     PhantomStyle style;
@@ -37,5 +43,10 @@ int main(int argc, char *argv[])
 
     MainWindow w;
     w.show();
-    return a.exec();
+
+    const auto ret = a.exec();
+
+    SDL_Quit();
+
+    return ret;
 }

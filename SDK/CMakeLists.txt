@@ -28,6 +28,13 @@ set(PROJECT_SOURCES
     ${SOULCAST_SDK_SOURCE_DIR}/codeeditor.ui
     ${SOULCAST_SDK_SOURCE_DIR}/SDK.hpp
     ${SOULCAST_SDK_SOURCE_DIR}/SDK.cpp
+    ${SOULCAST_SDK_SOURCE_DIR}/GameWindow.hpp
+    ${SOULCAST_SDK_SOURCE_DIR}/GameWindow.cpp
+    ${SOULCAST_SDK_SOURCE_DIR}/gamewindow.ui
+    ${SOULCAST_SDK_SOURCE_DIR}/SDLRenderer.hpp
+    ${SOULCAST_SDK_SOURCE_DIR}/SDLRenderer.cpp
+    ${SOULCAST_SDK_SOURCE_DIR}/SDLKeymap.cpp
+    ${SOULCAST_SDK_SOURCE_DIR}/SDLKeymap.hpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
@@ -80,6 +87,32 @@ install(TARGETS SoulcastSDK
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(SoulcastSDK)
 endif()
+
+#--------------------------------------------------------------------
+# Engine DLL copy post-build step (Windows only)
+#--------------------------------------------------------------------
+target_link_libraries(SoulcastSDK PRIVATE SoulcastEngine)
+target_include_directories(SoulcastSDK PRIVATE ${SOULCAST_SDK_SOURCE_DIR})
+target_include_directories(SoulcastSDK PRIVATE ${CMAKE_SOURCE_DIR}/Engine/src)
+target_include_directories(SoulcastSDK PRIVATE ${CMAKE_SOURCE_DIR}/Engine/vendor/SDL3/include)
+
+if(WIN32)
+    add_custom_command(TARGET SoulcastSDK POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            $<TARGET_FILE:SoulcastEngine>
+            $<TARGET_FILE_DIR:SoulcastSDK>
+    )
+endif()
+
+#--------------------------------------------------------------------
+# SDL3
+#--------------------------------------------------------------------
+set(SDL_TEST_LIBRARY OFF)
+set(SDL_STATIC ON)
+set(SDL_SHARED OFF)
+
+target_include_directories(SoulcastSDK PRIVATE ${CMAKE_SOURCE_DIR}/Engine/vendor/SDL3/include)
+target_link_libraries(SoulcastSDK PRIVATE SDL3-static)
 
 #--------------------------------------------------------------------
 # External libraries

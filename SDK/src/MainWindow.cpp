@@ -5,6 +5,7 @@
 
 #include "AssetBrowser.hpp"
 #include "CodeEditor.hpp"
+#include "GameWindow.hpp"
 
 #include "SDK.hpp"
 
@@ -36,6 +37,8 @@ MainWindow::MainWindow(QWidget *parent)
     }
 
     OpenCodeEditor(SDK::GetProjectDataPath() + "Scripts/Game.lua");
+
+    OpenGamePlaytest();
 }
 
 MainWindow::~MainWindow()
@@ -66,6 +69,17 @@ void MainWindow::OpenCodeEditor(const QString &path)
 
     QString relativePath = QDir(SDK::GetProjectDataPath()).relativeFilePath(path);
     OpenTab("Code Editor", relativePath, editor, QIcon(":/icons/lua.svg"));
+}
+
+void MainWindow::OpenGamePlaytest()
+{
+    auto* gameWindow = new GameWindow(this);
+    gameWindow->show();
+    connect(gameWindow, &GameWindow::whenClosed, this, [this, gameWindow]()
+    {
+        delete gameWindow;
+        // OnGamePlaytestExit();
+    });
 }
 
 void MainWindow::onCloseTab(int index)

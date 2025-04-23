@@ -19,5 +19,33 @@
         <file>fonts/Consolas.ttf</file>
         <file>icons/lua.svg</file>
         <file>icons/sfc.svg</file>
+        <file>icons/action/add.png</file>
+        <file>icons/action/attach.png</file>
+        <file>icons/action/bookmark.png</file>
+        <file>icons/action/close.png</file>
+        <file>icons/action/full-screen.png</file>
+        <file>icons/action/mute.png</file>
+        <file>icons/action/new-file.png</file>
+        <file>icons/action/new-folder.png</file>
+        <file>icons/action/open.png</file>
+        <file>icons/action/properties.png</file>
+        <file>icons/action/quit.png</file>
+        <file>icons/action/refresh.png</file>
+        <file>icons/action/remove.png</file>
+        <file>icons/action/save.png</file>
+        <file>icons/action/search.png</file>
+        <file>icons/action/settings.png</file>
+        <file>icons/action/stop.png</file>
+        <file>icons/device/clock.png</file>
+        <file>icons/device/display.png</file>
+        <file>icons/device/joypad.png</file>
+        <file>icons/device/keyboard.png</file>
+        <file>icons/device/microphone.png</file>
+        <file>icons/device/mouse.png</file>
+        <file>icons/device/network.png</file>
+        <file>icons/device/optical.png</file>
+        <file>icons/device/printer.png</file>
+        <file>icons/device/speaker.png</file>
+        <file>icons/device/storage.png</file>
     </qresource>
 </RCC>
