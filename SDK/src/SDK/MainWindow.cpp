@@ -4,8 +4,8 @@
 #include <QDir>
 
 #include "AssetBrowser.hpp"
-#include "CodeEditor.hpp"
-#include "GameWindow.hpp"
+#include "SDK/Tools/CodeEditor.hpp"
+#include "SDK/Widgets/GameWindow.hpp"
 
 #include "SDK.hpp"
 

@@ -1,10 +1,8 @@
-#include "MainWindow.hpp"
-
-#include <phantomstyle.h>
-
 #include <QApplication>
-
+#include <phantomstyle.h>
 #include <SDL3/SDL.h>
+
+#include "SDK/MainWindow.hpp"
 
 int main(int argc, char *argv[])
 {

@@ -9,7 +9,7 @@
 
 #include <QVBoxLayout>
 
-#include "SDLRenderer.hpp"
+#include "SDK/SDL3/SDLRenderer.hpp"
 
 GameWindow::GameWindow(QWidget *parent)
     : QMainWindow(parent)

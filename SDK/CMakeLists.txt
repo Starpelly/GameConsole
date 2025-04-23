@@ -16,25 +16,30 @@ set(SOULCAST_SDK_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(SOULCAST_SDK_VENDOR_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vendor)
 set(SOULCAST_SDK_RESOURCES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/resources)
 
-set(PROJECT_SOURCES
-    ${SOULCAST_SDK_SOURCE_DIR}/main.cpp
-    ${SOULCAST_SDK_SOURCE_DIR}/MainWindow.cpp
-    ${SOULCAST_SDK_SOURCE_DIR}/MainWindow.hpp
-    ${SOULCAST_SDK_SOURCE_DIR}/mainwindow.ui
-    ${SOULCAST_SDK_SOURCE_DIR}/AssetBrowser.cpp
-    ${SOULCAST_SDK_SOURCE_DIR}/AssetBrowser.hpp
-    ${SOULCAST_SDK_SOURCE_DIR}/CodeEditor.hpp
-    ${SOULCAST_SDK_SOURCE_DIR}/CodeEditor.cpp
-    ${SOULCAST_SDK_SOURCE_DIR}/codeeditor.ui
-    ${SOULCAST_SDK_SOURCE_DIR}/SDK.hpp
-    ${SOULCAST_SDK_SOURCE_DIR}/SDK.cpp
-    ${SOULCAST_SDK_SOURCE_DIR}/GameWindow.hpp
-    ${SOULCAST_SDK_SOURCE_DIR}/GameWindow.cpp
-    ${SOULCAST_SDK_SOURCE_DIR}/gamewindow.ui
-    ${SOULCAST_SDK_SOURCE_DIR}/SDLRenderer.hpp
-    ${SOULCAST_SDK_SOURCE_DIR}/SDLRenderer.cpp
-    ${SOULCAST_SDK_SOURCE_DIR}/SDLKeymap.cpp
-    ${SOULCAST_SDK_SOURCE_DIR}/SDLKeymap.hpp
+#    set(PROJECT_SOURCES
+#        ${SOULCAST_SDK_SOURCE_DIR}/main.cpp
+#        ${SOULCAST_SDK_SOURCE_DIR}/MainWindow.cpp
+#        ${SOULCAST_SDK_SOURCE_DIR}/MainWindow.hpp
+#        ${SOULCAST_SDK_SOURCE_DIR}/mainwindow.ui
+#        ${SOULCAST_SDK_SOURCE_DIR}/AssetBrowser.cpp
+#        ${SOULCAST_SDK_SOURCE_DIR}/AssetBrowser.hpp
+#        ${SOULCAST_SDK_SOURCE_DIR}/CodeEditor.hpp
+#        ${SOULCAST_SDK_SOURCE_DIR}/CodeEditor.cpp
+#        ${SOULCAST_SDK_SOURCE_DIR}/codeeditor.ui
+#        ${SOULCAST_SDK_SOURCE_DIR}/SDK.hpp
+#        ${SOULCAST_SDK_SOURCE_DIR}/SDK.cpp
+#        ${SOULCAST_SDK_SOURCE_DIR}/GameWindow.hpp
+#        ${SOULCAST_SDK_SOURCE_DIR}/GameWindow.cpp
+#        ${SOULCAST_SDK_SOURCE_DIR}/gamewindow.ui
+#        ${SOULCAST_SDK_SOURCE_DIR}/SDLRenderer.hpp
+#        ${SOULCAST_SDK_SOURCE_DIR}/SDLRenderer.cpp
+#        ${SOULCAST_SDK_SOURCE_DIR}/SDLKeymap.cpp
+#        ${SOULCAST_SDK_SOURCE_DIR}/SDLKeymap.hpp
+#    )
+
+file(GLOB_RECURSE PROJECT_SOURCES
+    ${SOULCAST_SDK_SOURCE_DIR}/*.cpp
+    ${SOULCAST_SDK_SOURCE_DIR}/*.hpp
 )
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
