@@ -11,6 +11,7 @@
 QTreeWidgetItem* scriptsFolder;
 QTreeWidgetItem* paletteFolder;
 QTreeWidgetItem* spritesFolder;
+QTreeWidgetItem* musicFolder;
 
 AssetBrowser::AssetBrowser(QWidget* parent) : QTreeWidget{parent}
 {
@@ -23,6 +24,7 @@ AssetBrowser::AssetBrowser(QWidget* parent) : QTreeWidget{parent}
 
     // Create trees
     {
+        musicFolder   = CreateFolder("Music");
         paletteFolder = CreateFolder("Palettes");
         scriptsFolder = CreateFolder("Scripts");
         CreateFolder("SoundFX");
@@ -31,6 +33,9 @@ AssetBrowser::AssetBrowser(QWidget* parent) : QTreeWidget{parent}
 
     // Populate trees
     {
+        auto musicPath = SDK::GetProjectDataPath() + "/Music";
+        PopulateTree(musicFolder, musicPath, "*.mid", QIcon(":/icons/midi.png"));
+
         auto palettePath = SDK::GetProjectDataPath() + "/Palettes";
         PopulateTree(paletteFolder, palettePath, "*.pal", QIcon(":/icons/sfc.svg"));
 

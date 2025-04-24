@@ -85,6 +85,16 @@ add_subdirectory(${SOULCAST_ENGINE_VENDOR_DIR}/efsw)
 target_link_libraries(SoulcastEngine PRIVATE efsw)
 
 #--------------------------------------------------------------------
+# midifile
+#--------------------------------------------------------------------
+set(BUILD_MIDILIBRARY_ONLY TRUE)
+
+add_subdirectory(${SOULCAST_ENGINE_VENDOR_DIR}/midifile)
+target_link_libraries(SoulcastEngine PRIVATE midifile)
+
+target_include_directories(SoulcastEngine PRIVATE ${SOULCAST_ENGINE_VENDOR_DIR}/midifile/include)
+
+#--------------------------------------------------------------------
 # Folder structuring in Visual Studio
 #--------------------------------------------------------------------
 set_target_properties(SDL3-shared PROPERTIES FOLDER "Vendor/Engine")

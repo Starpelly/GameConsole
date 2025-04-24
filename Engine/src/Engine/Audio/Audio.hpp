@@ -5,13 +5,12 @@ namespace Soulcast
 	#define SFX_COUNT		(0x100)
 	#define CHANNEL_COUNT	(0x10)
 
-	#define AUDIO_FREQUENCY	(44100)
+	#define AUDIO_SAMPLERATE	(44100)
 	#define AUDIO_CHANNELS	(4)
 
 	#define PCM_CHANNEL_SNAPSHOTS (32)
 
 	#define OCTAVE_BASE_FREQUENCY 110.0
-	#define d12thRootOf2 pow(2.0, 1.0 / 12.0)
 
 	enum class WaveType
 	{
@@ -31,7 +30,7 @@ namespace Soulcast
 
 	enum class AudioInterpolation
 	{
-		None, // Nearest-neighbor
+		None,		// Nearest-neighbor
 		Gaussian,
 		Hermite
 	};
@@ -43,11 +42,16 @@ namespace Soulcast
 
 		float phase = 0.0f;
 		float frequency = 440.0f;
-		float sampleRate = AUDIO_FREQUENCY;
+		float sampleRate = AUDIO_SAMPLERATE;
 
 		float pan = 0.0f; // -1 = left, 0 = center, +1 = right
 
 		std::pair<float, float> GenerateSample()
+		{
+			return GenerateSample(this->frequency);
+		}
+
+		std::pair<float, float> GenerateSample(float freq)
 		{
 			if (empty) return { 0.0f, 0.0f };
 
@@ -64,7 +68,7 @@ namespace Soulcast
 			float right = sample * std::sqrtf((1.0f + pan) * 0.5f);
 
 			// Advance phase
-			phase += frequency * 32.0f / sampleRate;
+			phase += freq * 32.0f / sampleRate;
 			if (phase >= 32.0f) phase -= 32.0f;
 
 			return { left, right };
@@ -79,6 +83,11 @@ namespace Soulcast
 		float sampleRate = 44100.0f;
 
 		float GenerateSample()
+		{
+			return GenerateSample(this->freq);
+		}
+
+		float GenerateSample(float freq)
 		{
 			float sample = (fmod(phase, 1.0f) < duty) ? 0.8f : -0.8f;
 			phase += freq / sampleRate;
@@ -99,11 +108,41 @@ namespace Soulcast
 		}
 	};
 
+	struct AudioState
+	{
+		double time = 0.0;
+
+		struct Voice
+		{
+			bool active = false;
+			double freq = 0.0;
+			double phase = 0.0;
+			int currentNote = -1;
+		};
+
+		std::vector<Voice> tracks;
+	
+		void resize(int numTracks)
+		{
+			tracks.resize(numTracks);
+		}
+	};
+
+	struct ScheduledMidiEvent
+	{
+		double timeInSeconds;
+		int track;
+		int note;
+		bool isNoteOn;
+	};
+
 	struct SoundChip
 	{
 		PulseChannel pulse1, pulse2;
 		PCMChannel pcm;
 		NoiseChannel noise;
+
+		AudioState state;
 
 		SoundChip() = default;
 	};
@@ -114,13 +153,22 @@ namespace Soulcast
 		static void Init();
 		static void Release();
 
-		static void SetPCMFreq(float freq);
-		static void SetPCMPan(float pan);
+		static void ProcessMIDI(std::vector<ScheduledMidiEvent>& queue, AudioState& audio, size_t& eventIndex);
+		static void TestMIDIDraw(std::vector<ScheduledMidiEvent>& queue, AudioState& audio, double totalDuration);
 
 #if SOULCAST_USING_SDL3
 		static SDL_AudioDeviceID streamDeviceID;
+		static SDL_AudioStream* audioStream;
 #endif
 	};
 
-	PCMChannel load4BitPCMFile(const char* filename);
+	namespace Audio
+	{
+		PCMChannel Load4BitPCMFile(const char* filename);
+
+		inline double MidiNoteToFreq(int midiNote)
+		{
+			return 440.0 * pow(2.0, (midiNote - 69) / 12.0);
+		}
+	}
 }

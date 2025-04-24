@@ -49,6 +49,7 @@ MainWindow::MainWindow(QWidget *parent)
     }
 
     // OpenCodeEditor(SDK::GetProjectDataPath() + "Scripts/Test.lua");
+    OpenPaletteEditor(QUuid(), SDK::GetProjectDataPath() + "Palettes/mario.pal");
 }
 
 MainWindow::~MainWindow()
@@ -118,7 +119,7 @@ void MainWindow::OpenCodeEditor(const QUuid& uuid, const QString &path)
 
 void MainWindow::OpenPaletteEditor(const QUuid &uuid, const QString &path)
 {
-    auto editor = new PaletteEditor();
+    auto editor = new PaletteEditor(path);
     // editor->OpenFile(path);
 
     QString relativePath = QDir(SDK::GetProjectDataPath()).relativeFilePath(path);

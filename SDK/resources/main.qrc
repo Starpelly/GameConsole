@@ -47,5 +47,7 @@
         <file>icons/device/printer.png</file>
         <file>icons/device/speaker.png</file>
         <file>icons/device/storage.png</file>
+        <file>icons/midi.svg</file>
+        <file>icons/midi.png</file>
     </qresource>
 </RCC>

@@ -1,8 +1,48 @@
 #include "Engine.hpp"
 // #include "TestGame.hpp"
 #include <iostream>
+#include <vector>
+
+#include <MidiFile.h>
 
 using namespace Soulcast;
+
+using namespace smf;
+static MidiFile midifile;
+double duration = 0.0;
+size_t eventIndex = 0;
+
+const int channelCount = 3;
+
+std::vector<ScheduledMidiEvent> eventQueue;
+static std::vector<ScheduledMidiEvent> BuildEventQueue(MidiFile& midi)
+{
+    std::vector<ScheduledMidiEvent> events;
+    int numTracks = midi.getTrackCount();
+
+    for (int track = 0; track < numTracks; ++track)
+    {
+        for (int i = 0; i < midi[track].size(); i++)
+        {
+            auto& ev = midi[track][i];
+
+            if (ev.isNoteOn())
+            {
+                events.push_back({ ev.seconds, ev.track, ev.getKeyNumber(), true });
+            }
+            else if (ev.isNoteOff())
+            {
+                events.push_back({ ev.seconds, ev.track, ev.getKeyNumber(), false });
+            }
+        }
+    }
+
+    std::sort(events.begin(), events.end(),
+        [](const ScheduledMidiEvent& a, const ScheduledMidiEvent& b) {
+            return a.timeInSeconds < b.timeInSeconds;
+        });
+    return events;
+}
 
 SoulcastEngine Soulcast::Engine = SoulcastEngine();
 
@@ -148,6 +188,14 @@ bool SoulcastEngine::Init(SDL_Window* window)
     Engine.curTicks = 0;
     Engine.prevTicks = 0;
 
+    midifile.read("Music/smw.mid");
+    midifile.doTimeAnalysis();
+
+    duration = midifile.getFileDurationInSeconds();
+    eventQueue = BuildEventQueue(midifile);
+
+    Engine.soundChip.state.resize(midifile.getTrackCount());
+
 	return 0;
 }
 
@@ -157,14 +205,14 @@ static void loadPCMFile(int test)
 	filename << "SoundFX/programmable_wave_samples/";
 	filename << std::setw(2) << std::setfill('0') << test;
 	filename << ".pcm";
-	Engine.soundChip.pcm = load4BitPCMFile(filename.str().c_str());
+	Engine.soundChip.pcm = Audio::Load4BitPCMFile(filename.str().c_str());
 
 	std::cout << "Loading sample " << filename.str() << std::endl;
 }
 
 void SoulcastEngine::Run()
 {	
-	// loadPCMFile(1);
+	loadPCMFile(3);
 
 	while (Engine.running)
 	{
@@ -219,15 +267,13 @@ void SoulcastEngine::DoOneFrame()
             switch (Engine.mode)
             {
             case ENGINE_MAINGAME:
-                ScriptingEngine::UpdateScripts();
-                ScriptingEngine::RenderScripts();
+                // ScriptingEngine::UpdateScripts();
+                // ScriptingEngine::RenderScripts();
 
-                // auto mousePan = Math::lerp(-1, 1, ((float)Input::mouseX) / (SCREEN_XSIZE * Engine.windowScale));
-                // auto mouseFreq = -(Input::mouseY - (SCREEN_YSIZE * Engine.windowScale));
-                // AudioDevice::SetPCMFreq(OCTAVE_BASE_FREQUENCY * pow(d12thRootOf2, 12));
-                // AudioDevice::SetPCMPan(0.0f);
+                AudioDevice::ProcessMIDI(eventQueue, Engine.soundChip.state, eventIndex);
+                AudioDevice::TestMIDIDraw(eventQueue, Engine.soundChip.state, duration);
 
-                PPU::DrawRectangle(Input::mouseX / Engine.windowScale, Input::mouseY / Engine.windowScale, 32, 32, 0xFFFF);
+                // PPU::DrawRectangle(Input::mouseX / Engine.windowScale, Input::mouseY / Engine.windowScale, 32, 32, 0xFFFF);
                 break;
 
             case ENGINE_EXITGAME:

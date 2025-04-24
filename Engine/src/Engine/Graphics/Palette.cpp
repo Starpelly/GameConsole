@@ -15,7 +15,7 @@ namespace Soulcast
     uint8 activePaletteBank = 0;
 }
 
-static std::vector<PaletteEntry> LoadJASCPalette(const std::string& filename)
+static std::vector<PaletteEntry> Palette::LoadJASCPalette(const std::string& filename)
 {
     std::ifstream file(filename);
     if (!file.is_open())

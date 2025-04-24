@@ -38,7 +38,7 @@ namespace Soulcast
 	extern PaletteEntry* activePalette;
 	extern uint8 activePaletteBank;
 
-	namespace Palette
+    namespace Palette
 	{
 		void LoadPaletteBank(uint8 bank, const char* filePath);
 
@@ -49,5 +49,7 @@ namespace Soulcast
 		void SetPaletteColor(uint8 bank, uint8 index, PaletteEntry color);
 
 		void CopyPalette(uint8 src, uint8 dest);
+
+        SOULCAST_API std::vector<PaletteEntry> LoadJASCPalette(const std::string& filename);
 	}
 }
