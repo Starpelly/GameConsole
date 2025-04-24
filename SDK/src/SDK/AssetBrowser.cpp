@@ -78,6 +78,10 @@ AssetBrowser::AssetBrowser(QWidget* parent) : QTreeWidget{parent}
         {
             GetMainWindow()->OpenPaletteEditor(uuid, fullPath);
         }
+        if (item->childCount() == 0 && item->text(0).endsWith(".mid", Qt::CaseInsensitive))
+        {
+            GetMainWindow()->OpenMusicEditor(uuid, fullPath);
+        }
     });
 }
 

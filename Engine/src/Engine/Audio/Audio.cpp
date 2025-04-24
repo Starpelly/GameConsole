@@ -3,9 +3,8 @@
 #include <iostream>
 #include <fstream>
 
-#include <Midifile.h>
-
 using namespace Soulcast;
+using namespace Soulcast::Audio;
 
 SDL_AudioDeviceID AudioDevice::streamDeviceID;
 SDL_AudioStream* AudioDevice::audioStream;
@@ -38,8 +37,8 @@ static void audioCallback(void* userdata, Uint8* stream, int len)
 
 			switch (track - 2)
 			{
-			case 0:
-			case 1:
+			case CHANNEL_PULSE_0:
+			case CHANNEL_PULSE_1:
 			default:
 			{
 				// @HACK - The first two tracks are pulse waves, not square waves,
@@ -53,11 +52,16 @@ static void audioCallback(void* userdata, Uint8* stream, int len)
 				// sample += value * 0.2f;
 			}
 			break;
-			case 2:
+			case CHANNEL_PCM:
 			{
 				auto [pcmL, pcmR] = Engine.soundChip.pcm.GenerateSample(voice.freq);
 				l += pcmL;
 				r += pcmR;
+			}
+			break;
+			case CHANNEL_NOISE:
+			{
+
 			}
 			break;
 			}
@@ -174,8 +178,8 @@ static void NoteOff(AudioState& audio, int track, int note)
 #endif
 }
 
-double zoom = 1;
-double xpos = 0;
+float zoom = 1;
+float xpos = 0;
 
 void AudioDevice::TestMIDIDraw(std::vector<ScheduledMidiEvent>& queue, AudioState& audio, double totalDuration)
 {
@@ -183,29 +187,33 @@ void AudioDevice::TestMIDIDraw(std::vector<ScheduledMidiEvent>& queue, AudioStat
 
 	if (Input::IsButtonPressed(INPUT_DOWN))
 	{
-		zoom -= 1;
+		zoom -= 4;
 	}
 	if (Input::IsButtonPressed(INPUT_UP))
 	{
-		zoom += 1;
+		zoom += 4;
 	}
 
 	if (zoom <= 0)
 		zoom = 1;
 
-	if (Input::IsButtonDown(INPUT_LEFT))
+	const float pixelsPerSecond = 32 * zoom;
+	const float screenWidthInSeconds = SCREEN_XSIZE / pixelsPerSecond;
+
+	if (Input::IsButtonPressed(INPUT_LEFT))
 	{
-		xpos -= 1 * zoom;
+		xpos -= 1;
 	}
-	if (Input::IsButtonDown(INPUT_RIGHT))
+	if (Input::IsButtonPressed(INPUT_RIGHT))
 	{
-		xpos += 1 * zoom;
+		xpos += 1;
 	}
 
 	if (xpos < 0)
 		xpos = 0;
 
-	double screenWidth = SCREEN_XSIZE * zoom;
+	const float leftSeconds = xpos;
+	const float rightSeconds = xpos + screenWidthInSeconds;
 
 	for (const auto& ev : queue)
 	{
@@ -222,22 +230,42 @@ void AudioDevice::TestMIDIDraw(std::vector<ScheduledMidiEvent>& queue, AudioStat
 			}
 		}
 
-		float x = ((start / totalDuration) * screenWidth) - xpos;
-		float width = ((end - start) / totalDuration) * screenWidth;
+		if (start + end < leftSeconds)
+			continue;
+		if (start > rightSeconds)
+			break;
+
+		auto startVisual = start - xpos;
+		auto endVisual = end - xpos;
+
+		float x = (startVisual * pixelsPerSecond);
+		float width = (endVisual - startVisual) * pixelsPerSecond;
 		float y = SCREEN_YSIZE - (ev.note / 127.0f) * SCREEN_YSIZE;
 		float height = 2.0f;
 
-		int color = RGB888_TO_RGB565(220, 96, 105);
-		if (ev.track == 3)
-			color = RGB888_TO_RGB565(141, 187, 110);
-		if (ev.track == 4)
-			color = RGB888_TO_RGB565(225, 184, 111);
+		if (width < 0.5)
+			continue;
+
+		uint16 color = 0xFFFF;
+		/*
+		if (eventIndex == i)
+		{
+
+		}
+		else
+		*/
+		{
+			color = RGB888_TO_RGB565(220, 96, 105);
+			if (ev.track == 3)
+				color = RGB888_TO_RGB565(141, 187, 110);
+			if (ev.track == 4)
+				color = RGB888_TO_RGB565(225, 184, 111);
+		}
 
 		PPU::DrawRectangle(x, y, width, height, color);
 	}
 
-	float cursorX = ((audio.time / totalDuration) * screenWidth) - xpos
-		;
+	float cursorX = ((audio.time - xpos) * pixelsPerSecond);
 	PPU::DrawRectangle(cursorX, 0, 1, SCREEN_YSIZE, 0xFF00);
 }
 
@@ -269,4 +297,33 @@ void AudioDevice::Release()
 	}
 	SDL_QuitSubSystem(SDL_INIT_AUDIO);
 #endif
+}
+
+std::vector<ScheduledMidiEvent> Soulcast::Audio::BuildEventQueue(MidiFile& midi)
+{
+	std::vector<Audio::ScheduledMidiEvent> events;
+	int numTracks = midi.getTrackCount();
+
+	for (int track = 0; track < numTracks; ++track)
+	{
+		for (int i = 0; i < midi[track].size(); i++)
+		{
+			auto& ev = midi[track][i];
+
+			if (ev.isNoteOn())
+			{
+				events.push_back({ ev.seconds, ev.track, ev.getKeyNumber(), true });
+			}
+			else if (ev.isNoteOff())
+			{
+				events.push_back({ ev.seconds, ev.track, ev.getKeyNumber(), false });
+			}
+		}
+	}
+
+	std::sort(events.begin(), events.end(),
+		[](const Audio::ScheduledMidiEvent& a, const Audio::ScheduledMidiEvent& b) {
+			return a.timeInSeconds < b.timeInSeconds;
+		});
+	return events;
 }

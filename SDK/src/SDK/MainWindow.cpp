@@ -8,6 +8,7 @@
 // Tools
 #include "SDK/Tools/CodeEditor.hpp"
 #include "SDK/Tools/PaletteEditor.hpp"
+#include "SDK/Tools/MusicEditor.hpp"
 
 // Widgets
 #include "SDK/Widgets/GameWindow.hpp"
@@ -49,7 +50,8 @@ MainWindow::MainWindow(QWidget *parent)
     }
 
     // OpenCodeEditor(SDK::GetProjectDataPath() + "Scripts/Test.lua");
-    OpenPaletteEditor(QUuid(), SDK::GetProjectDataPath() + "Palettes/mario.pal");
+    // OpenPaletteEditor(QUuid(), SDK::GetProjectDataPath() + "Palettes/mario.pal");
+    OpenMusicEditor(QUuid(), SDK::GetProjectDataPath() + "Music/smw.mid");
 }
 
 MainWindow::~MainWindow()
@@ -124,6 +126,14 @@ void MainWindow::OpenPaletteEditor(const QUuid &uuid, const QString &path)
 
     QString relativePath = QDir(SDK::GetProjectDataPath()).relativeFilePath(path);
     OpenTab(uuid, "Palette Editor", relativePath, editor, QIcon(":/icons/sfc.svg"));
+}
+
+void MainWindow::OpenMusicEditor(const QUuid &uuid, const QString &path)
+{
+    auto editor = new MusicEditor(path);
+
+    QString relativePath = QDir(SDK::GetProjectDataPath()).relativeFilePath(path);
+    OpenTab(uuid, "Music Editor", relativePath, editor, QIcon(":/icons/midi.png"));
 }
 
 void MainWindow::OpenPlaytest()

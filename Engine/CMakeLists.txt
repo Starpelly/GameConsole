@@ -90,9 +90,9 @@ target_link_libraries(SoulcastEngine PRIVATE efsw)
 set(BUILD_MIDILIBRARY_ONLY TRUE)
 
 add_subdirectory(${SOULCAST_ENGINE_VENDOR_DIR}/midifile)
-target_link_libraries(SoulcastEngine PRIVATE midifile)
+target_link_libraries(SoulcastEngine PUBLIC midifile)
 
-target_include_directories(SoulcastEngine PRIVATE ${SOULCAST_ENGINE_VENDOR_DIR}/midifile/include)
+target_include_directories(SoulcastEngine PUBLIC ${SOULCAST_ENGINE_VENDOR_DIR}/midifile/include)
 
 #--------------------------------------------------------------------
 # Folder structuring in Visual Studio

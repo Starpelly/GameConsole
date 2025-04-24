@@ -40,6 +40,7 @@ void PaletteEditor::Init(const QString& path)
 // -------------
 // PaletteWidget
 // -------------
+
 PaletteWidget::PaletteWidget(QWidget* parent) : QWidget(parent)
 {
     setMouseTracking(true);

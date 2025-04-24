@@ -1,5 +1,9 @@
 #pragma once
 
+#include <vector>
+#include <Midifile.h>
+using namespace smf;
+
 namespace Soulcast
 {
 	#define SFX_COUNT		(0x100)
@@ -12,6 +16,8 @@ namespace Soulcast
 
 	#define OCTAVE_BASE_FREQUENCY 110.0
 
+namespace Audio
+{
 	enum class WaveType
 	{
 		Square,
@@ -21,11 +27,12 @@ namespace Soulcast
 		Noise
 	};
 
-	enum class ChannelType
+	enum ChannelType
 	{
-		Pulse,
-		PCM,
-		Noise
+		CHANNEL_PULSE_0,
+		CHANNEL_PULSE_1,
+		CHANNEL_PCM,
+		CHANNEL_NOISE
 	};
 
 	enum class AudioInterpolation
@@ -118,10 +125,11 @@ namespace Soulcast
 			double freq = 0.0;
 			double phase = 0.0;
 			int currentNote = -1;
+			int currentIndex = 0;
 		};
 
 		std::vector<Voice> tracks;
-	
+
 		void resize(int numTracks)
 		{
 			tracks.resize(numTracks);
@@ -136,39 +144,40 @@ namespace Soulcast
 		bool isNoteOn;
 	};
 
-	struct SoundChip
+	PCMChannel Load4BitPCMFile(const char* filename);
+
+	inline double MidiNoteToFreq(int midiNote)
 	{
-		PulseChannel pulse1, pulse2;
-		PCMChannel pcm;
-		NoiseChannel noise;
+		return 440.0 * pow(2.0, (midiNote - 69) / 12.0);
+	}
 
-		AudioState state;
+	SOULCAST_API std::vector<ScheduledMidiEvent> BuildEventQueue(MidiFile& midi);
+}
 
-		SoundChip() = default;
-	};
+struct SoundChip
+{
+	Audio::PulseChannel pulse1, pulse2;
+	Audio::PCMChannel pcm;
+	Audio::NoiseChannel noise;
 
-	class AudioDevice
-	{
-	public:
-		static void Init();
-		static void Release();
+	Audio::AudioState state;
 
-		static void ProcessMIDI(std::vector<ScheduledMidiEvent>& queue, AudioState& audio, size_t& eventIndex);
-		static void TestMIDIDraw(std::vector<ScheduledMidiEvent>& queue, AudioState& audio, double totalDuration);
+	SoundChip() = default;
+};
+
+class AudioDevice
+{
+public:
+	static void Init();
+	static void Release();
+
+	static void ProcessMIDI(std::vector<Audio::ScheduledMidiEvent>& queue, Audio::AudioState& audio, size_t& eventIndex);
+	static void TestMIDIDraw(std::vector<Audio::ScheduledMidiEvent>& queue, Audio::AudioState& audio, double totalDuration);
 
 #if SOULCAST_USING_SDL3
-		static SDL_AudioDeviceID streamDeviceID;
-		static SDL_AudioStream* audioStream;
+	static SDL_AudioDeviceID streamDeviceID;
+	static SDL_AudioStream* audioStream;
 #endif
-	};
+};
 
-	namespace Audio
-	{
-		PCMChannel Load4BitPCMFile(const char* filename);
-
-		inline double MidiNoteToFreq(int midiNote)
-		{
-			return 440.0 * pow(2.0, (midiNote - 69) / 12.0);
-		}
-	}
 }

@@ -90,8 +90,14 @@
     </property>
     <addaction name="actionPalette_Editor"/>
    </widget>
+   <widget class="QMenu" name="menuHelp">
+    <property name="title">
+     <string>Help</string>
+    </property>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuTools"/>
+   <addaction name="menuHelp"/>
   </widget>
   <action name="actionPlayGame">
    <property name="icon">

@@ -24,6 +24,7 @@ public:
 
     auto OpenCodeEditor(const QUuid& uuid, const QString& path) -> void;
     auto OpenPaletteEditor(const QUuid& uuid, const QString& path) -> void;
+    auto OpenMusicEditor(const QUuid& uuid, const QString& path) -> void;
 
     auto OpenPlaytest() -> void;
     auto OnPlaytestClose() -> void;

@@ -142,5 +142,10 @@ namespace Soulcast
 				(endian == Endian::Little && is_little_endian()) ||
 				(endian == Endian::Big && is_big_endian());
 		}
+
+        inline float round2Nearest(float a, float interval)
+        {
+            return a - fmod(a, interval);
+        }
 	}
 }

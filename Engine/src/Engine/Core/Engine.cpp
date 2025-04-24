@@ -1,48 +1,14 @@
 #include "Engine.hpp"
-// #include "TestGame.hpp"
 #include <iostream>
 #include <vector>
 
-#include <MidiFile.h>
-
 using namespace Soulcast;
 
-using namespace smf;
 static MidiFile midifile;
 double duration = 0.0;
 size_t eventIndex = 0;
 
-const int channelCount = 3;
-
-std::vector<ScheduledMidiEvent> eventQueue;
-static std::vector<ScheduledMidiEvent> BuildEventQueue(MidiFile& midi)
-{
-    std::vector<ScheduledMidiEvent> events;
-    int numTracks = midi.getTrackCount();
-
-    for (int track = 0; track < numTracks; ++track)
-    {
-        for (int i = 0; i < midi[track].size(); i++)
-        {
-            auto& ev = midi[track][i];
-
-            if (ev.isNoteOn())
-            {
-                events.push_back({ ev.seconds, ev.track, ev.getKeyNumber(), true });
-            }
-            else if (ev.isNoteOff())
-            {
-                events.push_back({ ev.seconds, ev.track, ev.getKeyNumber(), false });
-            }
-        }
-    }
-
-    std::sort(events.begin(), events.end(),
-        [](const ScheduledMidiEvent& a, const ScheduledMidiEvent& b) {
-            return a.timeInSeconds < b.timeInSeconds;
-        });
-    return events;
-}
+std::vector<Audio::ScheduledMidiEvent> eventQueue;
 
 SoulcastEngine Soulcast::Engine = SoulcastEngine();
 
@@ -192,7 +158,7 @@ bool SoulcastEngine::Init(SDL_Window* window)
     midifile.doTimeAnalysis();
 
     duration = midifile.getFileDurationInSeconds();
-    eventQueue = BuildEventQueue(midifile);
+    eventQueue = Audio::BuildEventQueue(midifile);
 
     Engine.soundChip.state.resize(midifile.getTrackCount());
 
@@ -267,11 +233,11 @@ void SoulcastEngine::DoOneFrame()
             switch (Engine.mode)
             {
             case ENGINE_MAINGAME:
-                // ScriptingEngine::UpdateScripts();
-                // ScriptingEngine::RenderScripts();
+                ScriptingEngine::UpdateScripts();
+                ScriptingEngine::RenderScripts();
 
                 AudioDevice::ProcessMIDI(eventQueue, Engine.soundChip.state, eventIndex);
-                AudioDevice::TestMIDIDraw(eventQueue, Engine.soundChip.state, duration);
+                // AudioDevice::TestMIDIDraw(eventQueue, Engine.soundChip.state, duration);
 
                 // PPU::DrawRectangle(Input::mouseX / Engine.windowScale, Input::mouseY / Engine.windowScale, 32, 32, 0xFFFF);
                 break;
