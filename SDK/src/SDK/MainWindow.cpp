@@ -4,7 +4,12 @@
 #include <QDir>
 
 #include "AssetBrowser.hpp"
+
+// Tools
 #include "SDK/Tools/CodeEditor.hpp"
+#include "SDK/Tools/PaletteEditor.hpp"
+
+// Widgets
 #include "SDK/Widgets/GameWindow.hpp"
 
 #include "SDK.hpp"
@@ -43,7 +48,7 @@ MainWindow::MainWindow(QWidget *parent)
         });
     }
 
-    OpenCodeEditor(SDK::GetProjectDataPath() + "Scripts/Test.lua");
+    // OpenCodeEditor(SDK::GetProjectDataPath() + "Scripts/Test.lua");
 }
 
 MainWindow::~MainWindow()
@@ -51,7 +56,7 @@ MainWindow::~MainWindow()
     delete ui;
 }
 
-void MainWindow::OpenTab(const QString& toolName, const QString& title, QWidget* widget)
+void MainWindow::OpenTab(const QUuid& uuid, const QString& toolName, const QString& title, QWidget* widget)
 {
     auto tabName = toolName;
     tabName.append(" - ");
@@ -60,22 +65,64 @@ void MainWindow::OpenTab(const QString& toolName, const QString& title, QWidget*
     ui->tabWidget->setCurrentIndex(index);
 }
 
-void MainWindow::OpenTab(const QString &toolName, const QString &title, QWidget *widget, const QIcon &icon)
+void MainWindow::OpenTab(const QUuid& uuid, const QString &toolName, const QString &title, QWidget *widget, const QIcon &icon)
 {
+    if (openTabs.contains(uuid))
+    {
+        QWidget* widget = openTabs[uuid];
+        int index = ui->tabWidget->indexOf(widget);
+        if (index != -1)
+        {
+            ui->tabWidget->setCurrentIndex(index);
+            return;
+        }
+        else
+        {
+            openTabs.remove(uuid); // Clean up stale entry just in case
+        }
+    }
+
     auto tabName = toolName;
     tabName.append(" - ");
     tabName.append(title);
     auto index = ui->tabWidget->addTab(widget, icon, tabName);
     ui->tabWidget->setCurrentIndex(index);
+    openTabs[uuid] = widget;
 }
 
-void MainWindow::OpenCodeEditor(const QString &path)
+void MainWindow::onCloseTab(int index)
+{
+    auto* closedWidget = ui->tabWidget->widget(index);
+
+    // Remove from UUID map
+    auto it = std::find_if(openTabs.begin(), openTabs.end(),
+        [closedWidget](QWidget* widget) {
+            return widget == closedWidget;
+        });
+
+    if (it != openTabs.end())
+        openTabs.erase(it);
+
+    ui->tabWidget->removeTab(index);
+    delete closedWidget;
+}
+
+void MainWindow::OpenCodeEditor(const QUuid& uuid, const QString &path)
 {
     auto editor = new CodeEditor();
     editor->OpenFile(path);
 
     QString relativePath = QDir(SDK::GetProjectDataPath()).relativeFilePath(path);
-    OpenTab("Code Editor", relativePath, editor, QIcon(":/icons/lua.svg"));
+    OpenTab(uuid, "Code Editor", relativePath, editor, QIcon(":/icons/lua.svg"));
+}
+
+void MainWindow::OpenPaletteEditor(const QUuid &uuid, const QString &path)
+{
+    auto editor = new PaletteEditor();
+    // editor->OpenFile(path);
+
+    QString relativePath = QDir(SDK::GetProjectDataPath()).relativeFilePath(path);
+    OpenTab(uuid, "Palette Editor", relativePath, editor, QIcon(":/icons/sfc.svg"));
 }
 
 void MainWindow::OpenPlaytest()
@@ -103,11 +150,4 @@ void MainWindow::SetToolsEnabled(bool val)
     ui->actionBuildGame->setEnabled(val);
     ui->actionExportGame->setEnabled(val);
     ui->actionGameSettings->setEnabled(val);
-}
-
-void MainWindow::onCloseTab(int index)
-{
-    auto widget = ui->tabWidget->widget(index);
-    ui->tabWidget->removeTab(index);
-    delete widget;
 }

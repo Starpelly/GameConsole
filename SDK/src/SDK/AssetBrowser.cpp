@@ -61,12 +61,17 @@ AssetBrowser::AssetBrowser(QWidget* parent) : QTreeWidget{parent}
         }
 
         fullPath = item->data(0, Qt::UserRole).toString();
+        QUuid uuid = item->data(1, Qt::UserRole).toUuid();
 
         qDebug() << "Double-clicked file:" << fullPath;
 
         if (item->childCount() == 0 && item->text(0).endsWith(".lua", Qt::CaseInsensitive))
         {
-            GetMainWindow()->OpenCodeEditor(fullPath);
+            GetMainWindow()->OpenCodeEditor(uuid, fullPath);
+        }
+        if (item->childCount() == 0 && item->text(0).endsWith(".pal", Qt::CaseInsensitive))
+        {
+            GetMainWindow()->OpenPaletteEditor(uuid, fullPath);
         }
     });
 }
@@ -126,5 +131,17 @@ void AssetBrowser::PopulateTree(QTreeWidgetItem* parentItem, const QString& fold
         fileItem->setIcon(0, icon);
         fileItem->setSizeHint(0, QSize(100, 20));
         fileItem->setData(0, Qt::UserRole, filePath);
+
+        QString canonicalPath = QFileInfo(filePath).canonicalFilePath();
+
+        QUuid uuid;
+        if (!fileToUuid.contains(canonicalPath)) {
+            uuid = QUuid::createUuid();
+            fileToUuid[canonicalPath] = uuid;
+        } else {
+            uuid = fileToUuid[canonicalPath];
+        }
+
+        fileItem->setData(1, Qt::UserRole, uuid);
     }
 }

@@ -267,6 +267,9 @@ void SoulcastEngine::DoOneFrame()
 
 void SoulcastEngine::Release()
 {
+    Engine.initialized = false;
+    Engine.running = false;
+
 	ScriptingEngine::Release();
 	PPU::Release();
 	Input::Release();

@@ -2,6 +2,8 @@
 #define MAINWINDOW_HPP
 
 #include <QMainWindow>
+#include <QMap>
+#include <QUuid>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -17,10 +19,11 @@ public:
     MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
 
-    auto OpenTab(const QString& toolName, const QString& title, QWidget* widget) -> void;
-    auto OpenTab(const QString& toolName, const QString& title, QWidget* widget, const QIcon& icon) -> void;
+    auto OpenTab(const QUuid& uuid, const QString& toolName, const QString& title, QWidget* widget) -> void;
+    auto OpenTab(const QUuid& uuid, const QString& toolName, const QString& title, QWidget* widget, const QIcon& icon) -> void;
 
-    auto OpenCodeEditor(const QString& path) -> void;
+    auto OpenCodeEditor(const QUuid& uuid, const QString& path) -> void;
+    auto OpenPaletteEditor(const QUuid& uuid, const QString& path) -> void;
 
     auto OpenPlaytest() -> void;
     auto OnPlaytestClose() -> void;
@@ -30,6 +33,7 @@ private:
 
 private:
     Ui::MainWindow *ui;
+    QMap<QUuid, QWidget*> openTabs;
 };
 
 MainWindow* GetMainWindow();
