@@ -12,6 +12,7 @@ class MusicEditor;
 }
 
 constexpr auto TRACK_INFO_WIDTH = 93;
+const QColor COLOR_SEPARATOR = QColor(22, 22, 22);
 
 struct MidiNote
 {
@@ -56,6 +57,9 @@ public:
     bool m_playing = false;
     double startTime = 0.0;
 
+    void SwitchTrack(int track);
+    int currentTrack = 0;
+
 private slots:
     void ProcessAudio();
 
@@ -73,10 +77,11 @@ class PianoWidget : public QWidget
 {
     Q_OBJECT
 public:
-    explicit PianoWidget(QWidget* parent = nullptr);
+    explicit PianoWidget(MusicEditor* editor, QWidget* parent = nullptr);
 
     void Init();
 
+    MusicEditor* editor = nullptr;
     QScrollBar* scrollbar = nullptr;
     MusicData* data = nullptr;
 
@@ -93,10 +98,10 @@ private:
 
 private:
     static constexpr auto KEYBOARD_WIDTH = TRACK_INFO_WIDTH;
-    static constexpr auto TIMELINE_HEIGHT = 24;
+    static constexpr auto TIMELINE_HEIGHT = 12;
 
     static constexpr auto TILES_START_X = KEYBOARD_WIDTH + 1; // The start of the piano tiles view
-    static constexpr auto TILES_START_Y = TIMELINE_HEIGHT;
+    static constexpr auto TILES_START_Y = TIMELINE_HEIGHT + 1;
 
     static constexpr auto MAX_KEY_COUNT = 132.0f;
     static constexpr auto MAX_KEY_COUNT_M1 = MAX_KEY_COUNT - 1;
@@ -118,12 +123,18 @@ class TracksWidget : public QWidget
 {
     Q_OBJECT
 public:
-    explicit TracksWidget(QWidget* parent = nullptr);
+    explicit TracksWidget(MusicEditor* editor, QWidget* parent = nullptr);
 
+    MusicEditor* editor = nullptr;
     MusicData* data = nullptr;
+
+    short m_highlight = -1;
 
 protected:
     void paintEvent(QPaintEvent*) override;
+    void mousePressEvent(QMouseEvent*) override;
+    void mouseReleaseEvent(QMouseEvent*) override;
+    void mouseMoveEvent(QMouseEvent*) override;
 };
 
 #endif // MUSICEDITOR_HPP

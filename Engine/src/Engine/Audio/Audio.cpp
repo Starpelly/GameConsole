@@ -36,7 +36,7 @@ static void audioCallback(void* userdata, Uint8* stream, int len)
 		for (int track = 0; track < state->tracks.size(); track++)
 		{
 			auto& voice = state->tracks[track];
-			if (!voice.active) continue;
+            if (!voice.active || voice.silenced) continue;
 
 			switch (track - 2)
 			{
@@ -164,7 +164,12 @@ static void NoteOn(AudioState& audio, int track, int note)
 
 #if SOULCAST_USING_SDL3
 	SDL_LockAudioStream(AudioDevice::audioStream);
-	audio.tracks[track] = { true, freq, 0.0, note };
+    // audio.tracks[track] = { true, audio.tracks[track].silenced, freq, 0.0, note };
+    audio.tracks[track].active = true;
+    audio.tracks[track].freq = freq;
+    audio.tracks[track].phase = 0.0;
+    audio.tracks[track].currentNote = note;
+
 	SDL_UnlockAudioStream(AudioDevice::audioStream);
 #endif
 }

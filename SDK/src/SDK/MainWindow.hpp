@@ -5,6 +5,9 @@
 #include <QMap>
 #include <QUuid>
 
+#include <qtvariantproperty.h>
+#include <qttreepropertybrowser.h>
+
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
@@ -31,6 +34,11 @@ public:
     auto SetToolsEnabled(bool val) -> void;
 private:
     void onCloseTab(int index);
+
+private:
+    QtVariantPropertyManager* m_VariantManager;
+    QtVariantEditorFactory* m_VariantFactory;
+    QtTreePropertyBrowser* m_VariantEditor;
 
 private:
     Ui::MainWindow *ui;

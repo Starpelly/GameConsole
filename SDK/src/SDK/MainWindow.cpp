@@ -38,6 +38,24 @@ MainWindow::MainWindow(QWidget *parent)
         ui->assetTreeLayout->addWidget(assetBrowser);
     }
 
+    // Property Browser
+    {
+        m_VariantManager = new QtVariantPropertyManager(this);
+        m_VariantFactory = new QtVariantEditorFactory(this);
+
+        m_VariantEditor = new QtTreePropertyBrowser(this);
+        m_VariantEditor->setFactoryForManager(m_VariantManager, m_VariantFactory);
+        m_VariantEditor->setPropertiesWithoutValueMarked(true);
+        m_VariantEditor->setRootIsDecorated(false);
+        m_VariantEditor->setAlternatingRowColors(false);
+        // variantEditor->setResizeMode(QtTreePropertyBrowser::Interactive);
+
+        m_VariantEditor->clear();
+
+        m_VariantEditor->setMaximumWidth(250);
+        ui->assetTreeLayout->addWidget(m_VariantEditor);
+    }
+
     // Tab setup
     {
         ui->tabWidget->setTabsClosable(true);

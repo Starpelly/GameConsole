@@ -10,6 +10,8 @@
 #include <QFontDatabase>
 #include <QDateTime>
 
+#include <phantomstyle.h>
+
 struct TempoChange
 {
     double seconds;
@@ -208,6 +210,19 @@ void MusicEditor::Stop()
     m_playing = false;
 }
 
+void MusicEditor::SwitchTrack(int t)
+{
+    currentTrack = t;
+
+    for (int i = 0; i < data->state.tracks.size(); i++)
+    {
+        data->state.tracks[i].silenced = true;
+    }
+    data->state.tracks[t + 2].silenced = false;
+
+    update();
+}
+
 void MusicEditor::ProcessAudio()
 {
     double now = QDateTime::currentMSecsSinceEpoch() / 1000.0;
@@ -227,7 +242,8 @@ QStringList fontFamilies;
 QString fontFamily;
 bool madeFont = false;
 
-PianoWidget::PianoWidget(QWidget *parent)
+PianoWidget::PianoWidget(MusicEditor* editor, QWidget *parent)
+    : editor(editor)
 {
     // @HACK
     if (!madeFont)
@@ -372,6 +388,9 @@ void PianoWidget::paintEvent(QPaintEvent* )
 
         auto drawTrack = [&](int t)
         {
+            if (t >= data->tracks.size())
+                return;
+
             const int startIndex = 0;
             const auto& track = data->tracks[t];
 
@@ -412,7 +431,7 @@ void PianoWidget::paintEvent(QPaintEvent* )
         {
             // drawTrack(t);
         }
-        drawTrack(4);
+        drawTrack(editor->currentTrack + 2);
 
         p.setRenderHint(QPainter::Antialiasing, false);
     }
@@ -515,7 +534,7 @@ void PianoWidget::paintEvent(QPaintEvent* )
 
         // Keyboard separator
         {
-            p.setPen(QPen(qApp->palette().window().color()));
+            p.setPen(COLOR_SEPARATOR);
             p.resetTransform();
 
             p.drawLine(KEYBOARD_WIDTH, 0, KEYBOARD_WIDTH, widgetHeight);
@@ -536,15 +555,19 @@ void PianoWidget::paintEvent(QPaintEvent* )
     {
         p.resetTransform();
 
-        p.setPen(Qt::NoPen);
+        // p.setPen(Qt::NoPen);
+        // p.drawRect(0, 0, widgetWidth, TILES_START_Y);
+
+        p.setBrush(COLOR_SEPARATOR);
         p.drawRect(0, 0, widgetWidth, TILES_START_Y);
 
-        p.setBrush(QColor(0, 0, 0));
-        p.drawRect(TILES_START_X, 0, widgetWidth, TILES_START_Y);
+        p.setPen(COLOR_SEPARATOR);
+        p.drawLine(0, TILES_START_Y, widgetWidth, TILES_START_Y);
 
         // Timed shit
         p.save();
         {
+            p.setPen(Qt::NoPen);
             p.setClipping(true);
             p.setClipRect(TILES_START_X, 0, widgetWidth, widgetHeight);
 
@@ -564,6 +587,14 @@ void PianoWidget::paintEvent(QPaintEvent* )
             p.restore();
         }
         p.restore();
+    }
+
+    // Keyboard separator
+    {
+        p.setPen(COLOR_SEPARATOR);
+        p.resetTransform();
+
+        p.drawLine(KEYBOARD_WIDTH, 0, KEYBOARD_WIDTH, widgetHeight);
     }
 }
 
@@ -602,15 +633,15 @@ void PianoWidget::mouseMoveEvent(QMouseEvent* event)
 
 void PianoWidget::wheelEvent(QWheelEvent* event)
 {
-    float oldZoomX = zoomX;
-    float oldZoomY = zoomY;
+    const float oldZoomX = zoomX;
+    const float oldZoomY = zoomY;
 
     // Zoom in/out factor
-    float factor = 1.1f;
-    bool zoomIn = event->angleDelta().y() > 0;
+    const float factor = 1.1f;
+    const bool zoomIn = event->angleDelta().y() > 0;
 
     // Determine zoom axis
-    bool ctrlHeld = event->modifiers() & Qt::ControlModifier;
+    const bool ctrlHeld = event->modifiers() & Qt::ControlModifier;
 
     // Screen position of the cursor
     QPointF cursor = event->position() - QPointF(TILES_START_X, 0);
@@ -663,9 +694,10 @@ void PianoWidget::resizeEvent(QResizeEvent *)
 // TracksWidget
 // ------------
 
-TracksWidget::TracksWidget(QWidget *parent)
+TracksWidget::TracksWidget(MusicEditor* editor, QWidget *parent)
+    : editor(editor)
 {
-
+    setMouseTracking(true);
 }
 
 void TracksWidget::paintEvent(QPaintEvent *)
@@ -684,16 +716,72 @@ void TracksWidget::paintEvent(QPaintEvent *)
     p.drawRect(0, 0, width(), height());
 
     // p.setPen(QPen(qApp->palette().window().color()));
-    p.setPen(Qt::black);
+    p.setPen(COLOR_SEPARATOR);
     p.drawLine(TRACK_INFO_WIDTH, 0, TRACK_INFO_WIDTH, height());
 
     // Draw channels
-    {
-        p.setPen(Qt::black);
+    {        
         for (int i = 0; i < CHANNEL_COUNT; i++)
         {
             const auto yPos = i * channelRowHeight;
-            p.drawLine(0, yPos, width(), yPos);
+
+            if (m_highlight == i)
+            {
+                p.save();
+                p.setPen(Qt::NoPen);
+                p.setBrush(QColor(255, 255, 255, 45));
+                p.drawRect(0, yPos, TRACK_INFO_WIDTH, channelRowHeight);
+                p.restore();
+            }
+
+            p.setPen(COLOR_SEPARATOR);
+            p.drawLine(0, yPos + channelRowHeight, width(), yPos + channelRowHeight);
+
+            p.setPen(qApp->palette().text().color());
+
+            // Channel label
+            {
+                p.save();
+
+                if (editor->currentTrack == i)
+                {
+                    p.setFont(QFont(qApp->font().family(), qApp->font().pointSize(), QFont::Bold));
+                }
+
+                p.drawText(QRect(4, yPos + 4, TRACK_INFO_WIDTH, channelRowHeight), Soulcast::Audio::ChannelTypeNames[i], Qt::AlignLeft | Qt::AlignTop);
+
+                p.restore();
+            }
         }
     }
+}
+
+void TracksWidget::mousePressEvent(QMouseEvent* event)
+{
+    if (m_highlight >= 0 && m_highlight < Soulcast::Audio::CHANNEL_COUNT)
+    {
+        editor->SwitchTrack(m_highlight);
+    }
+}
+
+void TracksWidget::mouseReleaseEvent(QMouseEvent* event)
+{
+
+}
+
+void TracksWidget::mouseMoveEvent(QMouseEvent* event)
+{
+    const auto channelRowHeight = (height() / Soulcast::Audio::CHANNEL_COUNT) * 1;
+
+    if (event->x() < TRACK_INFO_WIDTH && event->y() > 0)
+    {
+        m_highlight = event->y() / channelRowHeight;
+
+    }
+    else
+    {
+        m_highlight = -1;
+    }
+
+    update();
 }

@@ -1,6 +1,8 @@
 #pragma once
 
 #include <vector>
+#include <array>
+
 #include <Midifile.h>
 using namespace smf;
 
@@ -18,15 +20,6 @@ namespace Soulcast
 
 namespace Audio
 {
-	enum class WaveType
-	{
-		Square,
-		Sine,
-		PulseWave,
-		Triangle,
-		Noise
-	};
-
 	enum ChannelType
 	{
 		CHANNEL_PULSE_0,
@@ -35,6 +28,13 @@ namespace Audio
         CHANNEL_NOISE,
         CHANNEL_COUNT,
 	};
+
+    static const std::array<const char*, CHANNEL_COUNT> ChannelTypeNames = {
+        "Pulse 1",
+        "Pulse 2",
+        "PCM",
+        "Noise"
+    };
 
 	enum class AudioInterpolation
 	{
@@ -120,10 +120,12 @@ namespace Audio
 	{
 		double time = 0.0;
         bool active = false;
+        bool silenced = false;
 
 		struct Voice
 		{
 			bool active = false;
+            bool silenced = false;
 			double freq = 0.0;
 			double phase = 0.0;
 			int currentNote = -1;
