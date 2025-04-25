@@ -7,6 +7,8 @@
 #include <QWheelEvent>
 #include <QDebug>
 
+#include <QFontDatabase>
+
 struct TempoChange
 {
     double seconds;
@@ -65,10 +67,15 @@ static std::string GetNoteName(int midiNote)
     return noteNames[note] + std::to_string(octave);
 }
 
-bool IsBlackKey(int midiNote)
+static bool IsBlackKey(int midiNote)
 {
     int semitone = midiNote % 12;
     return semitone == 1 || semitone == 3 || semitone == 6 || semitone == 8 || semitone == 10;
+}
+
+static int GetOctave(int midiNote)
+{
+    return (midiNote / 12) - 1;  // Subtract 1 because MIDI note 0 = C–1
 }
 
 MusicEditor::MusicEditor(const QString& path, QWidget *parent)
@@ -123,9 +130,34 @@ void MusicEditor::Init(const QString &path)
 // MusicWidget
 // -----------
 
+int fontId;
+QStringList fontFamilies;
+QString fontFamily;
+bool madeFont = false;
+
 MusicWidget::MusicWidget(QWidget *parent)
 {
+    // @HACK
+    if (!madeFont)
+    {
+        // Load the font from a file
+        fontId = QFontDatabase::addApplicationFont(":/fonts/JetBrainsMono[wght].ttf");
+        if (fontId == -1)
+        {
+            qWarning("Failed to load font!");
+        }
 
+        // Get the family name of the loaded font
+        fontFamilies = QFontDatabase::applicationFontFamilies(fontId);
+        if (fontFamilies.isEmpty())
+        {
+            qWarning("No font families found!");
+        }
+
+        fontFamily = fontFamilies.first();
+
+        madeFont = true;
+    }
 }
 
 void MusicWidget::Init()
@@ -189,11 +221,17 @@ void MusicWidget::paintEvent(QPaintEvent* )
     const auto pianoRowHeight = (widgetHeight / MAX_KEY_COUNT) * zoomY;
     const auto pianoRowHalfHeight = pianoRowHeight / 2;
 
-    const auto blackKeyWidth = KEYBOARD_WIDTH;
+    const auto blackKeyWidth = KEYBOARD_WIDTH - 30;
 
 #define NOTE_TO_Y(note) ((MAX_KEY_COUNT_M1 - note) * pianoRowHeight)
 
-    // p.setRenderHint(QPainter::Antialiasing, true);
+    p.setRenderHint(QPainter::Antialiasing, true);
+
+    const QColor strongBeatColor(255, 255, 255, 32);
+    const QColor weakBeatColor(255, 255, 255, 10);
+
+    const QColor whiteKeyColor(205, 209, 216);
+    const QColor blackKeyColor(49, 55, 61);
 
     // Beat lines
     {
@@ -204,8 +242,6 @@ void MusicWidget::paintEvent(QPaintEvent* )
         p.resetTransform();
         p.translate(totalTranslateX, 0);
 
-        const QColor strongBeatColor(255, 255, 255, 32);
-        const QColor weakBeatColor(255, 255, 255, 10);
         QPen pen;
         pen.setWidth(0);
 
@@ -232,7 +268,9 @@ void MusicWidget::paintEvent(QPaintEvent* )
         const QColor trackColor2 = QColor(141, 187, 110);
         const QColor trackColor3 = QColor(225, 184, 111);
 
-        const auto screenWidthInSeconds = (width() / pixelsPerSecond);
+        const auto screenWidth = widgetWidth - TILES_START_X;
+
+        const auto screenWidthInSeconds = (screenWidth / pixelsPerSecond);
         const auto screenMinXInSeconds = -xpos / pixelsPerSecond;
         const auto screenMaxXInSeconds = screenMinXInSeconds + screenWidthInSeconds;
 
@@ -254,7 +292,7 @@ void MusicWidget::paintEvent(QPaintEvent* )
                 }
             }
 
-            if (start + end < screenMinXInSeconds)
+            if (end < screenMinXInSeconds)
                 continue;
 
             const float x = (start * pixelsPerSecond);
@@ -271,39 +309,18 @@ void MusicWidget::paintEvent(QPaintEvent* )
 
             p.setBrush(color);
 
-            // p.drawRoundedRect(x, y, width, height, 4, 4);
-            p.drawRect(x, y, width, height);
-        }
-    }
-
-    // Draw keyboard
-    {
-        p.resetTransform();
-
-        p.setPen(pen);
-        p.setBrush(QColor(205, 209, 216));
-        p.drawRect(QRect(0, 0, KEYBOARD_WIDTH, widgetHeight));
-
-        p.translate(0, ypos);
-
-        for (int i = 0; i < MAX_KEY_COUNT; i++)
-        {
-            const auto y = NOTE_TO_Y(i);
-            if (IsBlackKey(i))
-            {
-                p.setBrush(QColor(25, 25, 25));
-                p.drawRect(0, y, blackKeyWidth, pianoRowHeight);
-            }
-            else
-            {
-                // int y = ((maxKeyCount - 1) - i) *
-                p.drawText(QRect(0, y, KEYBOARD_WIDTH - 2, pianoRowHeight), Qt::AlignRight | Qt::AlignVCenter, QString().fromStdString(GetNoteName(i)));
-            }
+            p.drawRoundedRect(x, y, width, height, 4, 4);
+            // p.drawRect(x, y, width, height);
         }
     }
 
     // Row lines
     {
+        QPen pen;
+        pen.setColor(weakBeatColor);
+
+        p.setPen(pen);
+
         p.resetTransform();
         p.translate(0, ypos);
 
@@ -314,29 +331,101 @@ void MusicWidget::paintEvent(QPaintEvent* )
         }
     }
 
-    // Keyboard lines
-    if (false)
+    // Draw keyboard
+    if (true)
     {
-        bool lastWasBlackKey = false;
-        for (int i = 0; i < MAX_KEY_COUNT; i++)
+        p.setPen(Qt::NoPen);
+
+        // White keys
         {
-            if (IsBlackKey(i))
+            p.resetTransform();
+
+            p.setBrush(whiteKeyColor);
+            p.drawRect(QRect(0, 0, KEYBOARD_WIDTH, widgetHeight));
+        }
+
+        p.translate(0, ypos);
+
+        // Draw black keys
+        {
+            for (int i = 0; i < MAX_KEY_COUNT; i++)
             {
-                const auto lineY = (i * (pianoRowHeight)) + pianoRowHalfHeight;
-                p.drawLine(blackKeyWidth, lineY, KEYBOARD_WIDTH, lineY);
-                lastWasBlackKey = true;
-            }
-            else
-            {
-                if (!lastWasBlackKey)
+                const auto y = NOTE_TO_Y(i);
+
+                if (i % 12 == 0)
                 {
-                    const auto lineY = i * (pianoRowHeight);
-                    p.drawLine(0, lineY, KEYBOARD_WIDTH, lineY);
-                    // p.drawText(QRect(0, y, keyboardWidth - 2, pianoRowHeight), Qt::AlignRight | Qt::AlignVCenter, QString().fromStdString(GetNoteName(i)));
+                    p.save();
+                    p.setPen(Qt::NoPen);
+                    p.setBrush(QColor(0, 0, 0, 25));
+                    p.drawRect(QRect(0, y, KEYBOARD_WIDTH, pianoRowHeight));
+                    p.restore();
                 }
 
-                lastWasBlackKey = false;
+                if (IsBlackKey(i))
+                {
+                    p.setBrush(blackKeyColor);
+                    p.drawRect(0, y, blackKeyWidth, pianoRowHeight);
+                }
             }
+        }
+
+        // Draw key labels
+        {
+            QPen pen(blackKeyColor);
+            p.setPen(pen);
+
+            p.setFont(QFont(qApp->font().family(), std::min(pianoRowHalfHeight, (float)(KEYBOARD_WIDTH - blackKeyWidth) / 2), QFont::Bold));
+
+            for (int i = 0; i < MAX_KEY_COUNT; i++)
+            {
+                if (!IsBlackKey(i))
+                {
+                    const auto y = NOTE_TO_Y(i);
+                    p.drawText(QRect(0, y, KEYBOARD_WIDTH - 2, pianoRowHeight), Qt::AlignRight | Qt::AlignVCenter, QString().fromStdString(GetNoteName(i)));
+                }
+            }
+        }
+
+        // Keyboard lines
+        {
+            p.setPen(QPen(blackKeyColor));
+
+            bool lastWasBlackKey = false;
+            for (int i = 0; i < MAX_KEY_COUNT; i++)
+            {
+                if (IsBlackKey(i))
+                {
+                    lastWasBlackKey = true;
+                }
+                else
+                {
+                    if (!lastWasBlackKey)
+                    {
+                        const auto lineY = NOTE_TO_Y(i + 1);
+                        p.drawLine(0, lineY, KEYBOARD_WIDTH, lineY);
+                    }
+
+                    lastWasBlackKey = false;
+                }
+            }
+        }
+
+        // Keyboard separator
+        {
+            p.setPen(QPen(Qt::black));
+            p.resetTransform();
+
+            p.drawLine(KEYBOARD_WIDTH, 0, KEYBOARD_WIDTH, widgetHeight);
+        }
+    }
+    else
+    {
+        // Keyboard separator
+        {
+            p.setPen(QPen(Qt::white));
+            p.resetTransform();
+
+            p.drawLine(KEYBOARD_WIDTH, 0, KEYBOARD_WIDTH, widgetHeight);
         }
     }
 }

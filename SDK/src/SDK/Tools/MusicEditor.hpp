@@ -37,8 +37,8 @@ private:
 
     bool m_panning = false;
 
-    float panX;
-    float panY;
+    float panX = 0.0f;
+    float panY = 0.0f;
     float zoomX = 1;
     float zoomY = 1;
 

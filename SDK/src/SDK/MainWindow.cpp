@@ -55,7 +55,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     // OpenCodeEditor(SDK::GetProjectDataPath() + "Scripts/Test.lua");
     // OpenPaletteEditor(QUuid(), SDK::GetProjectDataPath() + "Palettes/mario.pal");
-    // OpenMusicEditor(QUuid(), SDK::GetProjectDataPath() + "Music/smw.mid");
+    OpenMusicEditor(QUuid(), SDK::GetProjectDataPath() + "Music/smw.mid");
 }
 
 MainWindow::~MainWindow()
