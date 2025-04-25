@@ -301,6 +301,11 @@ void SoulcastEngine::Release()
 #endif
 }
 
+void SoulcastEngine::ResetSystem()
+{
+    ScriptingEngine::Reset();
+}
+
 #if SOULCAST_USING_SDL3
 bool SoulcastEngine::ProcessEvent(const SDL_Event& event)
 #else
@@ -319,7 +324,7 @@ bool SoulcastEngine::ProcessEvent()
 
         if (key == SDL_SCANCODE_R) // I'm lazy
         {
-            ScriptingEngine::Reset();
+            ResetSystem();
         }
         break;
     }

@@ -49,11 +49,13 @@ MainWindow::MainWindow(QWidget *parent)
         connect(ui->actionPlayGame, &QAction::triggered, this, [this]() {
             this->OpenPlaytest();
         });
+        connect(ui->actionAbout_Qt, &QAction::triggered, this, &QApplication::aboutQt);
+        connect(ui->actionQuit, &QAction::triggered, this, &QApplication::quit);
     }
 
     // OpenCodeEditor(SDK::GetProjectDataPath() + "Scripts/Test.lua");
     // OpenPaletteEditor(QUuid(), SDK::GetProjectDataPath() + "Palettes/mario.pal");
-    OpenMusicEditor(QUuid(), SDK::GetProjectDataPath() + "Music/smw.mid");
+    // OpenMusicEditor(QUuid(), SDK::GetProjectDataPath() + "Music/smw.mid");
 }
 
 MainWindow::~MainWindow()

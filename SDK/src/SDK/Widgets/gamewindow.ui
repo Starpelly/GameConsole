@@ -10,13 +10,6 @@
     <height>600</height>
    </rect>
   </property>
-  <property name="windowTitle">
-   <string>MainWindow</string>
-  </property>
-  <property name="windowIcon">
-   <iconset resource="../resources/main.qrc">
-    <normaloff>:/icons/sfc.svg</normaloff>:/icons/sfc.svg</iconset>
-  </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout_2">
     <property name="spacing">
@@ -78,7 +71,7 @@
   <widget class="QStatusBar" name="statusbar"/>
   <action name="actionQuit">
    <property name="icon">
-    <iconset resource="../resources/main.qrc">
+    <iconset resource="../../../resources/main.qrc">
      <normaloff>:/icons/action/quit.png</normaloff>:/icons/action/quit.png</iconset>
    </property>
    <property name="text">
@@ -87,7 +80,7 @@
   </action>
   <action name="actionReset_System">
    <property name="icon">
-    <iconset resource="../resources/main.qrc">
+    <iconset resource="../../../resources/main.qrc">
      <normaloff>:/icons/action/refresh.png</normaloff>:/icons/action/refresh.png</iconset>
    </property>
    <property name="text">
@@ -122,7 +115,7 @@
   </action>
   <action name="actionController_Port_1">
    <property name="icon">
-    <iconset resource="../resources/main.qrc">
+    <iconset resource="../../../resources/main.qrc">
      <normaloff>:/icons/device/joypad.png</normaloff>:/icons/device/joypad.png</iconset>
    </property>
    <property name="text">
@@ -131,7 +124,7 @@
   </action>
   <action name="actionController_Port_2">
    <property name="icon">
-    <iconset resource="../resources/main.qrc">
+    <iconset resource="../../../resources/main.qrc">
      <normaloff>:/icons/device/joypad.png</normaloff>:/icons/device/joypad.png</iconset>
    </property>
    <property name="text">
@@ -140,7 +133,7 @@
   </action>
  </widget>
  <resources>
-  <include location="../resources/main.qrc"/>
+  <include location="../../../resources/main.qrc"/>
  </resources>
  <connections/>
 </ui>

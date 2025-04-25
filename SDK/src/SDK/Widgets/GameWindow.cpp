@@ -30,6 +30,14 @@ GameWindow::GameWindow(QWidget *parent)
         resize(SCREEN_XSIZE * Soulcast::Engine.windowScale, (SCREEN_YSIZE * Soulcast::Engine.windowScale) + statusBarHeight + menuBarHeight);
     }
 
+    // Actions
+    {
+        connect(ui->actionReset_System, &QAction::triggered, this, []() {
+            Soulcast::Engine.ResetSystem();
+        });
+        connect(ui->actionQuit, &QAction::triggered, this, &QMainWindow::close);
+    }
+
     // SDL setup
     {
         // sdlRenderer = new SDLRenderer(this);

@@ -89,6 +89,8 @@ namespace Soulcast
         void DoOneFrame();
 		void Release();
 
+        void ResetSystem();
+
 #if SOULCAST_USING_SDL3
         bool ProcessEvent(const SDL_Event& event);
 #endif
