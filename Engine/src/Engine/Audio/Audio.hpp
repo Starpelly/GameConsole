@@ -138,7 +138,7 @@ namespace Audio
 
 	struct ScheduledMidiEvent
 	{
-		double timeInSeconds;
+        double timeInSeconds;
 		int track;
 		int note;
 		bool isNoteOn;

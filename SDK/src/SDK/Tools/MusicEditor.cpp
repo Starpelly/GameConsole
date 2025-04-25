@@ -274,8 +274,11 @@ void MusicWidget::paintEvent(QPaintEvent* )
         const auto screenMinXInSeconds = -xpos / pixelsPerSecond;
         const auto screenMaxXInSeconds = screenMinXInSeconds + screenWidthInSeconds;
 
-        for (const auto& ev : data->eventQueue)
+        int startIndex = 0;
+        // for (const auto& ev : data->eventQueue)
+        for (int i = startIndex; i < data->eventQueue.size(); i++)
         {
+            auto& ev = data->eventQueue[i];
             if (!ev.isNoteOn) continue;
             double start = ev.timeInSeconds;
             double end = 0;
@@ -283,8 +286,10 @@ void MusicWidget::paintEvent(QPaintEvent* )
             if (start > screenMaxXInSeconds)
                 break;
 
-            for (const auto& off : data->eventQueue)
+            // for (const auto& off : data->eventQueue)
+            for (int ii = i; ii < data->eventQueue.size(); ii++)
             {
+                auto& off = data->eventQueue[ii];
                 if (!off.isNoteOn && off.note == ev.note && off.timeInSeconds > start)
                 {
                     end = off.timeInSeconds;
