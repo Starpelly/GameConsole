@@ -80,7 +80,8 @@ static int GetOctave(int midiNote)
 
 MusicEditor::MusicEditor(const QString& path, QWidget *parent)
     : QWidget(parent)
-    , widget(new MusicWidget(this))
+    , pianoWidget(new PianoWidget(this))
+    , tracksWidget(new TracksWidget(this))
     , ui(new Ui::MusicEditor)
 {
     ui->setupUi(this);
@@ -96,6 +97,16 @@ MusicEditor::~MusicEditor()
     delete ui;
 }
 
+struct MidiNote
+{
+    double timeInSeconds;
+    double endTimeInSeconds;
+
+    int note;
+};
+
+std::vector<std::vector<MidiNote>> tracks;
+
 void MusicEditor::Init(const QString &path)
 {
     // Music data
@@ -110,19 +121,56 @@ void MusicEditor::Init(const QString &path)
         data->tempo = GetInitialTempo(data->midifile);
 
         data->duration = data->midifile.getFileDurationInSeconds();
-        data->eventQueue = Soulcast::Audio::BuildEventQueue(data->midifile);
+        // data->eventQueue = Soulcast::Audio::BuildEventQueue(data->midifile);
+
+        auto& midi = data->midifile;
+
+        const auto numTracks = midi.getTrackCount();
+
+        tracks.resize(numTracks);
+        for (int t = 0; t < numTracks; ++t)
+        {
+            auto& track = midi[t];
+            for (int i = 0; i < track.size(); i++)
+            {
+                auto& ev = track[i];
+
+                if (ev.isNoteOn())
+                {
+                    auto endSeconds = 0.0f;
+
+                    for (int ii = i; ii < track.size(); ii++)
+                    {
+                        auto& off = track[ii];
+                        if (!off.isNoteOn() && off.getKeyNumber() == ev.getKeyNumber() && off.seconds > ev.seconds)
+                        {
+                            endSeconds = off.seconds;
+                            break;
+                        }
+                    }
+
+                    tracks[t].push_back({ ev.seconds, endSeconds, ev.getKeyNumber() });
+                }
+            }
+        }
     }
 
     // UI
     {
-        widget->data = this->data;
-        ui->widgetLayout->addWidget(widget, 1);
+        // Tracks
+        tracksWidget->data = this->data;
+        tracksWidget->setMaximumHeight(200);
+        ui->tracksContainer->addWidget(tracksWidget, 1);
+
+        // Piano Roll
+        pianoWidget->data = this->data;
+        ui->pianoRollContainer->addWidget(pianoWidget, 1);
 
         // Scrollbar
-        widget->scrollbar = new QScrollBar(Qt::Vertical, ui->widgetLayout->widget());
-        ui->widgetLayout->addWidget(widget->scrollbar);
+        pianoWidget->scrollbar = new QScrollBar(Qt::Vertical, ui->pianoRollContainer->widget());
+        ui->pianoRollContainer->addWidget(pianoWidget->scrollbar);
 
-        widget->Init();
+        pianoWidget->Init();
     }
 }
 
@@ -135,7 +183,7 @@ QStringList fontFamilies;
 QString fontFamily;
 bool madeFont = false;
 
-MusicWidget::MusicWidget(QWidget *parent)
+PianoWidget::PianoWidget(QWidget *parent)
 {
     // @HACK
     if (!madeFont)
@@ -160,7 +208,7 @@ MusicWidget::MusicWidget(QWidget *parent)
     }
 }
 
-void MusicWidget::Init()
+void PianoWidget::Init()
 {
     connect(scrollbar, &QScrollBar::valueChanged, this, [this](int value)
     {
@@ -169,7 +217,7 @@ void MusicWidget::Init()
     });
 }
 
-void MusicWidget::clampPan()
+void PianoWidget::clampPan()
 {
     if (panX > 0)
         panX = 0;
@@ -183,7 +231,7 @@ void MusicWidget::clampPan()
     }
 }
 
-void MusicWidget::updateScrollbar()
+void PianoWidget::updateScrollbar()
 {
     scrollbar->setRange(0, (height() * zoomY) - height());
     scrollbar->setPageStep(height());
@@ -191,14 +239,13 @@ void MusicWidget::updateScrollbar()
     scrollbar->setValue(-panY);
 }
 
-void MusicWidget::paintEvent(QPaintEvent* )
+void PianoWidget::paintEvent(QPaintEvent* )
 {
     QPainter p(this);
 
-    QPen pen(qApp->palette().base(), 0);
     p.setPen(Qt::NoPen);
 
-    p.setBrush(QColor(25, 25, 25));
+    p.setBrush(qApp->palette().dark());
     p.drawRect(0, 0, width(), height());
 
     const auto snapMult = 0.25f;
@@ -224,8 +271,6 @@ void MusicWidget::paintEvent(QPaintEvent* )
     const auto blackKeyWidth = KEYBOARD_WIDTH - 30;
 
 #define NOTE_TO_Y(note) ((MAX_KEY_COUNT_M1 - note) * pianoRowHeight)
-
-    p.setRenderHint(QPainter::Antialiasing, true);
 
     const QColor strongBeatColor(255, 255, 255, 32);
     const QColor weakBeatColor(255, 255, 255, 10);
@@ -259,6 +304,8 @@ void MusicWidget::paintEvent(QPaintEvent* )
 
     // Draw notes
     {
+        p.setRenderHint(QPainter::Antialiasing, true);
+
         p.resetTransform();
         p.translate(xpos, ypos);
         p.translate(TILES_START_X, 0);
@@ -276,47 +323,41 @@ void MusicWidget::paintEvent(QPaintEvent* )
 
         int startIndex = 0;
         // for (const auto& ev : data->eventQueue)
-        for (int i = startIndex; i < data->eventQueue.size(); i++)
+        for (int t = 0; t < tracks.size(); t++)
         {
-            auto& ev = data->eventQueue[i];
-            if (!ev.isNoteOn) continue;
-            double start = ev.timeInSeconds;
-            double end = 0;
-
-            if (start > screenMaxXInSeconds)
-                break;
-
-            // for (const auto& off : data->eventQueue)
-            for (int ii = i; ii < data->eventQueue.size(); ii++)
+            auto& track = tracks[t];
+            for (int i = startIndex; i < track.size(); i++)
             {
-                auto& off = data->eventQueue[ii];
-                if (!off.isNoteOn && off.note == ev.note && off.timeInSeconds > start)
-                {
-                    end = off.timeInSeconds;
+                auto& ev = track[i];
+
+                double start = ev.timeInSeconds;
+                double end = ev.endTimeInSeconds;
+
+                if (start > screenMaxXInSeconds)
                     break;
-                }
+                if (end < screenMinXInSeconds)
+                    continue;
+
+                const float x = (start * pixelsPerSecond);
+                const float width = (end - start) * pixelsPerSecond;
+                const float y = NOTE_TO_Y(ev.note);
+                const float height = pianoRowHeight;
+
+                auto color = trackColor1;
+
+                if (t == 3)
+                    color = trackColor2;
+                if (t == 4)
+                    color = trackColor3;
+
+                p.setBrush(color);
+
+                p.drawRoundedRect(x, y, width, height, 4, 4);
+                // p.drawRect(x, y, width, height);
             }
-
-            if (end < screenMinXInSeconds)
-                continue;
-
-            const float x = (start * pixelsPerSecond);
-            const float width = (end - start) * pixelsPerSecond;
-            const float y = NOTE_TO_Y(ev.note);
-            const float height = pianoRowHeight;
-
-            auto color = trackColor1;
-
-            if (ev.track == 3)
-                color = trackColor2;
-            if (ev.track == 4)
-                color = trackColor3;
-
-            p.setBrush(color);
-
-            p.drawRoundedRect(x, y, width, height, 4, 4);
-            // p.drawRect(x, y, width, height);
         }
+
+        p.setRenderHint(QPainter::Antialiasing, false);
     }
 
     // Row lines
@@ -379,7 +420,7 @@ void MusicWidget::paintEvent(QPaintEvent* )
             QPen pen(blackKeyColor);
             p.setPen(pen);
 
-            p.setFont(QFont(qApp->font().family(), std::min(pianoRowHalfHeight, (float)(KEYBOARD_WIDTH - blackKeyWidth) / 2), QFont::Bold));
+            p.setFont(QFont(qApp->font().family(), std::min(pianoRowHalfHeight, (float)(KEYBOARD_WIDTH - blackKeyWidth) / 2), QFont::DemiBold));
 
             for (int i = 0; i < MAX_KEY_COUNT; i++)
             {
@@ -417,7 +458,7 @@ void MusicWidget::paintEvent(QPaintEvent* )
 
         // Keyboard separator
         {
-            p.setPen(QPen(Qt::black));
+            p.setPen(QPen(qApp->palette().window().color()));
             p.resetTransform();
 
             p.drawLine(KEYBOARD_WIDTH, 0, KEYBOARD_WIDTH, widgetHeight);
@@ -435,7 +476,7 @@ void MusicWidget::paintEvent(QPaintEvent* )
     }
 }
 
-void MusicWidget::mousePressEvent(QMouseEvent* event)
+void PianoWidget::mousePressEvent(QMouseEvent* event)
 {
     if (event->button() == Qt::MiddleButton)
     {
@@ -445,7 +486,7 @@ void MusicWidget::mousePressEvent(QMouseEvent* event)
     }
 }
 
-void MusicWidget::mouseReleaseEvent(QMouseEvent* event)
+void PianoWidget::mouseReleaseEvent(QMouseEvent* event)
 {
     if (event->button() == Qt::MiddleButton)
     {
@@ -453,7 +494,7 @@ void MusicWidget::mouseReleaseEvent(QMouseEvent* event)
     }
 }
 
-void MusicWidget::mouseMoveEvent(QMouseEvent* event)
+void PianoWidget::mouseMoveEvent(QMouseEvent* event)
 {
     if (m_panning)
     {
@@ -468,7 +509,7 @@ void MusicWidget::mouseMoveEvent(QMouseEvent* event)
     }
 }
 
-void MusicWidget::wheelEvent(QWheelEvent* event)
+void PianoWidget::wheelEvent(QWheelEvent* event)
 {
     float oldZoomX = zoomX;
     float oldZoomY = zoomY;
@@ -521,8 +562,30 @@ void MusicWidget::wheelEvent(QWheelEvent* event)
     update();
 }
 
-void MusicWidget::resizeEvent(QResizeEvent *)
+void PianoWidget::resizeEvent(QResizeEvent *)
 {
     clampPan();
     updateScrollbar();
+}
+
+// ------------
+// TracksWidget
+// ------------
+
+TracksWidget::TracksWidget(QWidget *parent)
+{
+
+}
+
+void TracksWidget::paintEvent(QPaintEvent *)
+{
+    QPainter p(this);
+    p.setPen(Qt::NoPen);
+
+    p.setBrush(qApp->palette().base());
+    p.drawRect(0, 0, width(), height());
+
+    p.setPen(QPen(qApp->palette().window().color()));
+
+    p.drawLine(TRACK_INFO_WIDTH, 0, TRACK_INFO_WIDTH, height());
 }

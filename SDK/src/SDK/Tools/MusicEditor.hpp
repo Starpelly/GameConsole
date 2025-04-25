@@ -10,6 +10,8 @@ namespace Ui {
 class MusicEditor;
 }
 
+constexpr auto TRACK_INFO_WIDTH = 93;
+
 struct MusicData
 {
     MidiFile midifile;
@@ -20,11 +22,11 @@ struct MusicData
     std::vector<Soulcast::Audio::ScheduledMidiEvent> eventQueue;
 };
 
-class MusicWidget : public QWidget
+class PianoWidget : public QWidget
 {
     Q_OBJECT
 public:
-    explicit MusicWidget(QWidget* parent = nullptr);
+    explicit PianoWidget(QWidget* parent = nullptr);
 
     void Init();
 
@@ -43,7 +45,7 @@ private:
     float zoomY = 1;
 
 private:
-    static constexpr auto KEYBOARD_WIDTH = 82;
+    static constexpr auto KEYBOARD_WIDTH = TRACK_INFO_WIDTH;
     static constexpr auto TILES_START_X = KEYBOARD_WIDTH + 1; // The start of the piano tiles view
 
     static constexpr auto MAX_KEY_COUNT = 132.0f;
@@ -62,6 +64,18 @@ protected:
     void resizeEvent(QResizeEvent*) override;
 };
 
+class TracksWidget : public QWidget
+{
+    Q_OBJECT
+public:
+    explicit TracksWidget(QWidget* parent = nullptr);
+
+    MusicData* data = nullptr;
+
+protected:
+    void paintEvent(QPaintEvent*) override;
+};
+
 class MusicEditor : public QWidget
 {
     Q_OBJECT
@@ -73,7 +87,9 @@ public:
     void Init(const QString& path);
 
 private:
-    MusicWidget* widget;
+    PianoWidget* pianoWidget;
+    TracksWidget* tracksWidget;
+
     MusicData* data = nullptr;
 
 private:
