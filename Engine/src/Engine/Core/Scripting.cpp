@@ -222,7 +222,7 @@ static std::string extractHotloadChunk(const std::string& filePath)
 
 void ScriptingEngine::Init()
 {
-	fontBitmap.Load("Sprites/font.png");
+	fontBitmap.Load("Data/Sprites/font.png");
 	font.bitmap = &fontBitmap;
 
 	InitLua();
@@ -344,7 +344,7 @@ void ScriptingEngine::InitLua()
 void ScriptingEngine::StartROM()
 {
 	// Load test file
-	LoadScript("Scripts/Main.lua");
+	LoadScript("Data/Scripts/Main.lua");
 
 	kaguya::State state(L);
 	state[LUA_NAME]["init"]();
@@ -369,7 +369,7 @@ void ScriptingEngine::StartHotloader()
 	efsw::FileWatcher* fileWatcher = new efsw::FileWatcher();
 	UpdateListener* listener = new UpdateListener();
 
-	efsw::WatchID watchID = fileWatcher->addWatch("D:/Soulcast/test/Sandbox/Data/Scripts", listener, true);
+	efsw::WatchID watchID = fileWatcher->addWatch(std::filesystem::current_path().string() + "/Scripts", listener, true);
 
 	fileWatcher->watch();
 #endif

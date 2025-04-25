@@ -9,6 +9,7 @@
 
 #if TESTING_ENGINE
 #include <Engine/Core/Engine.hpp>
+#include "SDK.hpp"
 #else
 #include <array>
 #include "SDLKeymap.hpp"
@@ -58,7 +59,7 @@ SDLRenderer::SDLRenderer(QObject* parent) : QObject(parent) {
     Soulcast::Engine.windowContained = true;
     Soulcast::Engine.borderless = true;
 
-    Soulcast::Engine.Init();
+    Soulcast::Engine.Init(SDK::GetProjectPath().toStdString().c_str());
 
     wnd = Soulcast::Engine.window;
     renderer = Soulcast::Engine.renderer;

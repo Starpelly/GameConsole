@@ -29,6 +29,8 @@ MainWindow::MainWindow(QWidget *parent)
 
     ui->setupUi(this);
 
+    setWindowTitle("Soulcast Software Development Kit - " + SDK::GetProjectPath());
+
     // Asset browser
     {
         auto* assetBrowser = new AssetBrowser();

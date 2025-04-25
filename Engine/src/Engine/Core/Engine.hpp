@@ -84,7 +84,7 @@ namespace Soulcast
 	public:
 		SoulcastEngine() = default;
 
-		bool Init(SDL_Window* window = nullptr);
+		bool Init(const char* workingDir, SDL_Window* window = nullptr);
 		void Run();
         void DoOneFrame();
 		void Release();

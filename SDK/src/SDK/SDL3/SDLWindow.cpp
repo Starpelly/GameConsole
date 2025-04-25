@@ -1,6 +1,7 @@
 #include "SDLWindow.hpp"
 
 #include "Engine/Core/Engine.hpp"
+#include "SDK.hpp"
 
 SDLWindow::SDLWindow(QWidget* parent) : QWidget(parent), m_Timer(this)
 {
@@ -47,7 +48,7 @@ void SDLWindow::initialize()
 
         Soulcast::Engine.debugMode = false;
         Soulcast::Engine.windowContained = true;
-        Soulcast::Engine.Init(m_Window);
+        Soulcast::Engine.Init(SDK::GetProjectPath().toStdString().c_str(), m_Window);
 
         SDL_DestroyProperties(properties);
     }

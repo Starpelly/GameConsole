@@ -12,10 +12,8 @@ std::vector<Audio::ScheduledMidiEvent> eventQueue;
 
 SoulcastEngine Soulcast::Engine = SoulcastEngine();
 
-bool SoulcastEngine::Init(SDL_Window* window)
+bool SoulcastEngine::Init(const char* workingDirectory, SDL_Window* window)
 {
-	auto workingDirectory = "D:/Soulcast/test/Sandbox/Data";
-
 	if (std::filesystem::exists(static_cast<string>(workingDirectory)))
 	{
 		std::filesystem::current_path(static_cast<string>(workingDirectory));
@@ -154,7 +152,7 @@ bool SoulcastEngine::Init(SDL_Window* window)
     Engine.curTicks = 0;
     Engine.prevTicks = 0;
 
-    midifile.read("Music/smw.mid");
+    midifile.read("Data/Music/smw.mid");
     midifile.doTimeAnalysis();
 
     duration = midifile.getFileDurationInSeconds();
@@ -168,7 +166,7 @@ bool SoulcastEngine::Init(SDL_Window* window)
 static void loadPCMFile(int test)
 {
 	std::ostringstream filename;
-	filename << "SoundFX/programmable_wave_samples/";
+	filename << "Data/SoundFX/programmable_wave_samples/";
 	filename << std::setw(2) << std::setfill('0') << test;
 	filename << ".pcm";
 	Engine.soundChip.pcm = Audio::Load4BitPCMFile(filename.str().c_str());

@@ -60,7 +60,7 @@ static std::vector<PaletteEntry> Palette::LoadJASCPalette(const std::string& fil
 
 void Palette::LoadPaletteBank(uint8 bank, const char* filePath)
 {
-	auto parsedColors = LoadJASCPalette(filePath);
+	auto parsedColors = LoadJASCPalette("Data/" + std::string(filePath));
 
 	for (int32 i = 0; i < PALETTE_BANK_SIZE; i++)
 	{
