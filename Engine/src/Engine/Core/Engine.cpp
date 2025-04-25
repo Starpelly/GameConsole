@@ -143,7 +143,7 @@ bool SoulcastEngine::Init(const char* workingDirectory, SDL_Window* window)
     Engine.running = true;
     Engine.mode = ENGINE_MAINGAME;
 
-	AudioDevice::Init();
+	AudioDevice::Init(&Engine.soundChip.state);
 	Input::Init();
 	PPU::Init();
 	ScriptingEngine::Init();
@@ -234,7 +234,7 @@ void SoulcastEngine::DoOneFrame()
                 ScriptingEngine::UpdateScripts();
                 ScriptingEngine::RenderScripts();
 
-                AudioDevice::ProcessMIDI(eventQueue, Engine.soundChip.state, eventIndex);
+                // AudioDevice::ProcessMIDI(eventQueue, Engine.soundChip.state, eventIndex);
                 // AudioDevice::TestMIDIDraw(eventQueue, Engine.soundChip.state, duration);
 
                 // PPU::DrawRectangle(Input::mouseX / Engine.windowScale, Input::mouseY / Engine.windowScale, 32, 32, 0xFFFF);

@@ -7,7 +7,7 @@ using namespace smf;
 namespace Soulcast
 {
 	#define SFX_COUNT		(0x100)
-	#define CHANNEL_COUNT	(0x10)
+    // #define CHANNEL_COUNT	(0x10)
 
 	#define AUDIO_SAMPLERATE	(44100)
 	#define AUDIO_CHANNELS	(4)
@@ -32,7 +32,8 @@ namespace Audio
 		CHANNEL_PULSE_0,
 		CHANNEL_PULSE_1,
 		CHANNEL_PCM,
-		CHANNEL_NOISE
+        CHANNEL_NOISE,
+        CHANNEL_COUNT,
 	};
 
 	enum class AudioInterpolation
@@ -118,6 +119,7 @@ namespace Audio
 	struct AudioState
 	{
 		double time = 0.0;
+        bool active = false;
 
 		struct Voice
 		{
@@ -165,13 +167,13 @@ struct SoundChip
 	SoundChip() = default;
 };
 
-class AudioDevice
+class SOULCAST_API AudioDevice
 {
 public:
-	static void Init();
+	static void Init(Audio::AudioState* state);
 	static void Release();
 
-	static void ProcessMIDI(std::vector<Audio::ScheduledMidiEvent>& queue, Audio::AudioState& audio, size_t& eventIndex);
+    static void ProcessMIDI(double time, std::vector<Audio::ScheduledMidiEvent>& queue, Audio::AudioState& audio, size_t& eventIndex);
 	static void TestMIDIDraw(std::vector<Audio::ScheduledMidiEvent>& queue, Audio::AudioState& audio, double totalDuration);
 
 #if SOULCAST_USING_SDL3

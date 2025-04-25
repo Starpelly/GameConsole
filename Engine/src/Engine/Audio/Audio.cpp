@@ -11,6 +11,8 @@ SDL_AudioStream* AudioDevice::audioStream;
 
 static void audioCallback(void* userdata, Uint8* stream, int len)
 {
+	AudioState* state = (AudioState*)userdata;
+
 	float* out = reinterpret_cast<float*>(stream);
 	int totalSamples = len / sizeof(float); // stereo float = 2 per frame
 
@@ -30,9 +32,10 @@ static void audioCallback(void* userdata, Uint8* stream, int len)
 		// r += noiseSample;
 
 		// for (auto& voice : Engine.soundChip.state.tracks)
-		for (int track = 0; track < Engine.soundChip.state.tracks.size(); track++)
+        if (state->active)
+		for (int track = 0; track < state->tracks.size(); track++)
 		{
-			auto& voice = Engine.soundChip.state.tracks[track];
+			auto& voice = state->tracks[track];
 			if (!voice.active) continue;
 
 			switch (track - 2)
@@ -54,9 +57,11 @@ static void audioCallback(void* userdata, Uint8* stream, int len)
 			break;
 			case CHANNEL_PCM:
 			{
+				/*
 				auto [pcmL, pcmR] = Engine.soundChip.pcm.GenerateSample(voice.freq);
 				l += pcmL;
 				r += pcmR;
+				*/
 			}
 			break;
 			case CHANNEL_NOISE:
@@ -125,7 +130,7 @@ PCMChannel Audio::Load4BitPCMFile(const char* filename)
 	return channel;
 }
 
-void AudioDevice::Init()
+void AudioDevice::Init(AudioState* state)
 {
 #if SOULCAST_USING_SDL3
 	if (!SDL_InitSubSystem(SDL_INIT_AUDIO))
@@ -142,7 +147,7 @@ void AudioDevice::Init()
 		SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,
 		&spec,
 		SDL3_AudioCallback,
-		nullptr);
+		state);
 	if (!audioStream)
 		throw std::runtime_error(SDL_GetError());
 	streamDeviceID = SDL_GetAudioStreamDevice(audioStream);
@@ -269,11 +274,13 @@ void AudioDevice::TestMIDIDraw(std::vector<ScheduledMidiEvent>& queue, AudioStat
 	PPU::DrawRectangle(cursorX, 0, 1, SCREEN_YSIZE, 0xFF00);
 }
 
-void AudioDevice::ProcessMIDI(std::vector<ScheduledMidiEvent>& queue, AudioState& audio, size_t& eventIndex)
+void AudioDevice::ProcessMIDI(double time, std::vector<ScheduledMidiEvent>& queue, AudioState& audio, size_t& eventIndex)
 {
-	audio.time = Engine.time - 1.0f;
+    if (!audio.active) return;
 
-	while (eventIndex < queue.size() && queue[eventIndex].timeInSeconds <= audio.time)
+    audio.time = time;
+
+    while (eventIndex < queue.size() && queue[eventIndex].timeInSeconds <= audio.time)
 	{
 		const auto& ev = queue[eventIndex];
 		if (ev.isNoteOn)

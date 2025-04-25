@@ -8,6 +8,7 @@
 #include <QDebug>
 
 #include <QFontDatabase>
+#include <QDateTime>
 
 struct TempoChange
 {
@@ -97,18 +98,39 @@ MusicEditor::~MusicEditor()
     delete ui;
 }
 
-struct MidiNote
-{
-    double timeInSeconds;
-    double endTimeInSeconds;
-
-    int note;
-};
-
-std::vector<std::vector<MidiNote>> tracks;
-
 void MusicEditor::Init(const QString &path)
 {
+    // UI
+    {
+        // Tracks
+        tracksWidget->data = this->data;
+        tracksWidget->setMaximumHeight(200);
+        ui->tracksContainer->addWidget(tracksWidget, 1);
+
+        // Piano Roll
+        pianoWidget->data = this->data;
+        ui->pianoRollContainer->addWidget(pianoWidget, 1);
+
+        // Scrollbar
+        pianoWidget->scrollbar = new QScrollBar(Qt::Vertical, ui->pianoRollContainer->widget());
+        ui->pianoRollContainer->addWidget(pianoWidget->scrollbar);
+
+        pianoWidget->Init();
+    }
+
+    // Actions
+    {
+        connect(ui->playButton, &QPushButton::pressed, this, [this]()
+        {
+            if (!m_playing)
+                Start();
+            else
+                Stop();
+
+            ui->playButton->setText(m_playing ? "Stop" : "Play");
+        });
+    }
+
     // Music data
     {
         data->midifile.read(path.toStdString());
@@ -123,11 +145,15 @@ void MusicEditor::Init(const QString &path)
         data->duration = data->midifile.getFileDurationInSeconds();
         // data->eventQueue = Soulcast::Audio::BuildEventQueue(data->midifile);
 
+        data->eventQueue = Soulcast::Audio::BuildEventQueue(data->midifile);
+
+        data->state.resize(data->midifile.getTrackCount());
+
         auto& midi = data->midifile;
 
         const auto numTracks = midi.getTrackCount();
 
-        tracks.resize(numTracks);
+        data->tracks.resize(numTracks);
         for (int t = 0; t < numTracks; ++t)
         {
             auto& track = midi[t];
@@ -149,29 +175,47 @@ void MusicEditor::Init(const QString &path)
                         }
                     }
 
-                    tracks[t].push_back({ ev.seconds, endSeconds, ev.getKeyNumber() });
+                    data->tracks[t].push_back({ ev.seconds, endSeconds, ev.getKeyNumber() });
                 }
             }
         }
     }
 
-    // UI
-    {
-        // Tracks
-        tracksWidget->data = this->data;
-        tracksWidget->setMaximumHeight(200);
-        ui->tracksContainer->addWidget(tracksWidget, 1);
+    Soulcast::AudioDevice::Init(&data->state);
+}
 
-        // Piano Roll
-        pianoWidget->data = this->data;
-        ui->pianoRollContainer->addWidget(pianoWidget, 1);
+void MusicEditor::Start()
+{
+    data->eventIndex = 0;
+    data->state.active = true;
 
-        // Scrollbar
-        pianoWidget->scrollbar = new QScrollBar(Qt::Vertical, ui->pianoRollContainer->widget());
-        ui->pianoRollContainer->addWidget(pianoWidget->scrollbar);
+    startTime = QDateTime::currentMSecsSinceEpoch() / 1000.0;
 
-        pianoWidget->Init();
-    }
+    connect(&playbackTimer, &QTimer::timeout, this, &MusicEditor::ProcessAudio);
+
+    playbackTimer.start(1);
+
+    m_playing = true;
+}
+
+void MusicEditor::Stop()
+{
+    data->songPosition = 0.0;
+    data->eventIndex = 0;
+    data->state.active = false;
+
+    playbackTimer.stop();
+    m_playing = false;
+}
+
+void MusicEditor::ProcessAudio()
+{
+    double now = QDateTime::currentMSecsSinceEpoch() / 1000.0;
+    double elapsed = now - startTime;
+    data->songPosition = elapsed;
+
+    Soulcast::AudioDevice::ProcessMIDI(data->songPosition, data->eventQueue, data->state, data->eventIndex);
+    update();
 }
 
 // -----------
@@ -224,7 +268,9 @@ void PianoWidget::clampPan()
     if (panY > 0)
         panY = 0;
 
-    const auto min = -((height() * zoomY) - height());
+    const auto viewHeight = height() - TILES_START_Y;
+
+    const auto min = -((viewHeight * zoomY) - viewHeight);
     if (panY < min)
     {
         panY = min;
@@ -233,7 +279,9 @@ void PianoWidget::clampPan()
 
 void PianoWidget::updateScrollbar()
 {
-    scrollbar->setRange(0, (height() * zoomY) - height());
+    const auto viewHeight = height() - TILES_START_Y;
+
+    scrollbar->setRange(0, (viewHeight * zoomY) - viewHeight);
     scrollbar->setPageStep(height());
     // scrollbar->setSingleStep(20);
     scrollbar->setValue(-panY);
@@ -263,9 +311,12 @@ void PianoWidget::paintEvent(QPaintEvent* )
     const auto widgetWidth = width();
     const auto widgetHeight = height();
 
+    const auto screenWidth = widgetWidth - TILES_START_X;
+    const auto screenHeight = widgetHeight - TILES_START_Y;
+
     const auto numBeats = widgetWidth / pixelsPerBeat;
 
-    const auto pianoRowHeight = (widgetHeight / MAX_KEY_COUNT) * zoomY;
+    const auto pianoRowHeight = (screenHeight / MAX_KEY_COUNT) * zoomY;
     const auto pianoRowHalfHeight = pianoRowHeight / 2;
 
     const auto blackKeyWidth = KEYBOARD_WIDTH - 30;
@@ -308,30 +359,28 @@ void PianoWidget::paintEvent(QPaintEvent* )
 
         p.resetTransform();
         p.translate(xpos, ypos);
-        p.translate(TILES_START_X, 0);
+        p.translate(TILES_START_X, TILES_START_Y);
 
         const QColor trackColor0 = 0xFFFF;
         const QColor trackColor1 = QColor(220, 96, 105);
         const QColor trackColor2 = QColor(141, 187, 110);
         const QColor trackColor3 = QColor(225, 184, 111);
 
-        const auto screenWidth = widgetWidth - TILES_START_X;
-
         const auto screenWidthInSeconds = (screenWidth / pixelsPerSecond);
         const auto screenMinXInSeconds = -xpos / pixelsPerSecond;
         const auto screenMaxXInSeconds = screenMinXInSeconds + screenWidthInSeconds;
 
-        int startIndex = 0;
-        // for (const auto& ev : data->eventQueue)
-        for (int t = 0; t < tracks.size(); t++)
+        auto drawTrack = [&](int t)
         {
-            auto& track = tracks[t];
+            const int startIndex = 0;
+            const auto& track = data->tracks[t];
+
             for (int i = startIndex; i < track.size(); i++)
             {
-                auto& ev = track[i];
+                const auto& ev = track[i];
 
-                double start = ev.timeInSeconds;
-                double end = ev.endTimeInSeconds;
+                const double start = ev.timeInSeconds;
+                const double end = ev.endTimeInSeconds;
 
                 if (start > screenMaxXInSeconds)
                     break;
@@ -355,7 +404,15 @@ void PianoWidget::paintEvent(QPaintEvent* )
                 p.drawRoundedRect(x, y, width, height, 4, 4);
                 // p.drawRect(x, y, width, height);
             }
+        };
+
+
+        // for (const auto& ev : data->eventQueue)
+        for (int t = 0; t < data->tracks.size(); t++)
+        {
+            // drawTrack(t);
         }
+        drawTrack(4);
 
         p.setRenderHint(QPainter::Antialiasing, false);
     }
@@ -368,7 +425,7 @@ void PianoWidget::paintEvent(QPaintEvent* )
         p.setPen(pen);
 
         p.resetTransform();
-        p.translate(0, ypos);
+        p.translate(0, ypos + TILES_START_Y);
 
         for (int i = 0; i < MAX_KEY_COUNT; i++)
         {
@@ -390,7 +447,7 @@ void PianoWidget::paintEvent(QPaintEvent* )
             p.drawRect(QRect(0, 0, KEYBOARD_WIDTH, widgetHeight));
         }
 
-        p.translate(0, ypos);
+        p.translate(0, ypos + TILES_START_Y);
 
         // Draw black keys
         {
@@ -420,7 +477,7 @@ void PianoWidget::paintEvent(QPaintEvent* )
             QPen pen(blackKeyColor);
             p.setPen(pen);
 
-            p.setFont(QFont(qApp->font().family(), std::min(pianoRowHalfHeight, (float)(KEYBOARD_WIDTH - blackKeyWidth) / 2), QFont::DemiBold));
+            p.setFont(QFont(qApp->font().family(), std::min(pianoRowHalfHeight, (float)(KEYBOARD_WIDTH - blackKeyWidth) / 2), QFont::Normal));
 
             for (int i = 0; i < MAX_KEY_COUNT; i++)
             {
@@ -471,8 +528,42 @@ void PianoWidget::paintEvent(QPaintEvent* )
             p.setPen(QPen(Qt::white));
             p.resetTransform();
 
-            p.drawLine(KEYBOARD_WIDTH, 0, KEYBOARD_WIDTH, widgetHeight);
+            p.drawLine(KEYBOARD_WIDTH, 0, KEYBOARD_WIDTH, TIMELINE_HEIGHT);
         }
+    }
+
+    // Draw Timeline
+    {
+        p.resetTransform();
+
+        p.setPen(Qt::NoPen);
+        p.drawRect(0, 0, widgetWidth, TILES_START_Y);
+
+        p.setBrush(QColor(0, 0, 0));
+        p.drawRect(TILES_START_X, 0, widgetWidth, TILES_START_Y);
+
+        // Timed shit
+        p.save();
+        {
+            p.setClipping(true);
+            p.setClipRect(TILES_START_X, 0, widgetWidth, widgetHeight);
+
+            p.translate(xpos, 0);
+            p.translate(TILES_START_X, 0);
+
+            // Playback head
+            p.save();
+            {
+                const auto playbackX = data->songPosition * pixelsPerSecond;
+
+                QPen pen(qApp->palette().highlightedText().color());
+                pen.setWidth(2);
+                p.setPen(pen);
+                p.drawLine(playbackX, 0, playbackX, widgetHeight);
+            }
+            p.restore();
+        }
+        p.restore();
     }
 }
 
@@ -579,13 +670,30 @@ TracksWidget::TracksWidget(QWidget *parent)
 
 void TracksWidget::paintEvent(QPaintEvent *)
 {
+    const auto CHANNEL_COUNT = Soulcast::Audio::CHANNEL_COUNT;
+
+    const auto zoomX = 1;
+    const auto zoomY = 1;
+
+    const auto channelRowHeight = (height() / CHANNEL_COUNT) * zoomY;
+
     QPainter p(this);
     p.setPen(Qt::NoPen);
 
     p.setBrush(qApp->palette().base());
     p.drawRect(0, 0, width(), height());
 
-    p.setPen(QPen(qApp->palette().window().color()));
-
+    // p.setPen(QPen(qApp->palette().window().color()));
+    p.setPen(Qt::black);
     p.drawLine(TRACK_INFO_WIDTH, 0, TRACK_INFO_WIDTH, height());
+
+    // Draw channels
+    {
+        p.setPen(Qt::black);
+        for (int i = 0; i < CHANNEL_COUNT; i++)
+        {
+            const auto yPos = i * channelRowHeight;
+            p.drawLine(0, yPos, width(), yPos);
+        }
+    }
 }
