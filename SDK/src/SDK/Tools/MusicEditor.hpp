@@ -22,6 +22,38 @@ struct MidiNote
     int note;
 };
 
+struct AudioState
+{
+    double time = 0.0;
+    bool active = false;
+    bool silenced = false;
+
+    struct Voice
+    {
+        int channel = 0;
+        bool active = false;
+        bool silenced = false;
+        int currentNote = -1;
+        int currentIndex = 0;
+        double currentFrequency = 0.0;
+    };
+
+    std::vector<Voice> tracks;
+
+    void resize(int numTracks)
+    {
+        tracks.resize(numTracks);
+    }
+};
+
+struct ScheduledMidiEvent
+{
+    double timeInSeconds;
+    int track;
+    int note;
+    bool isNoteOn;
+};
+
 struct MusicData
 {
     MidiFile midifile;
@@ -31,9 +63,9 @@ struct MusicData
 
     double songPosition;
 
-    Soulcast::Audio::AudioState state;
+    AudioState state;
 
-    std::vector<Soulcast::Audio::ScheduledMidiEvent> eventQueue;
+    std::vector<ScheduledMidiEvent> eventQueue;
     std::vector<std::vector<MidiNote>> tracks;
 };
 

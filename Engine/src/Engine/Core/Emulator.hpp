@@ -43,8 +43,6 @@ namespace Soulcast
 		uint64 curTicks = 0;
 		uint64 prevTicks = 0;
 
-		SoundChip soundChip;
-
 #if SOULCAST_USING_SDL3
 		SDL_Window* window = nullptr;
 		SDL_Renderer* renderer = nullptr;

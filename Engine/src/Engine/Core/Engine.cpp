@@ -19,8 +19,8 @@ bool SoulcastEngine::Init(const char* workingDirectory, SDL_Window* window)
 
     Engine.initialized = true;
 
-	// AudioDevice::Init(&Engine.soundChip.state);
 	Input::Init();
+	AudioDevice::Init();
 	Drawing::Init();
 	ScriptingEngine::Init();
 
@@ -33,8 +33,8 @@ void SoulcastEngine::Release()
 
 	ScriptingEngine::Release();
 	Drawing::Release();
-	Input::Release();
 	AudioDevice::Release();
+	Input::Release();
 
 #if SOULCAST_USING_SDL3
 	SDL_Quit();

@@ -83,7 +83,7 @@ MainWindow::~MainWindow()
 
 void MainWindow::OpenTab(const QUuid& uuid, const QString& toolName, const QString& title, QWidget* widget)
 {
-    auto tabName = toolName;
+    auto tabName = QString(toolName);
     tabName.append(" - ");
     tabName.append(title);
     auto index = ui->tabWidget->addTab(widget, tabName);

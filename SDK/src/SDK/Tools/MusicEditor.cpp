@@ -18,6 +18,37 @@ struct TempoChange
     double bpm;
 };
 
+static std::vector<ScheduledMidiEvent> BuildEventQueue(MidiFile& midi, int startTrack)
+{
+    std::vector<ScheduledMidiEvent> events;
+    int numTracks = midi.getTrackCount();
+
+    for (int t = startTrack; t < numTracks; ++t)
+    {
+        const auto& track = midi[t];
+        for (int i = 0; i < track.size(); i++)
+        {
+            auto& ev = track[i];
+
+            if (ev.isNoteOn())
+            {
+                events.push_back({ ev.seconds, t - startTrack, ev.getKeyNumber(), true });
+            }
+            else if (ev.isNoteOff())
+            {
+                events.push_back({ ev.seconds, t - startTrack, ev.getKeyNumber(), false });
+            }
+        }
+    }
+
+    std::sort(events.begin(), events.end(),
+        [](const ScheduledMidiEvent& a, const ScheduledMidiEvent& b) {
+            return a.timeInSeconds < b.timeInSeconds;
+        });
+    return events;
+}
+
+
 static std::vector<TempoChange> GetTempoChanges(const smf::MidiFile& midi)
 {
     std::vector<TempoChange> tempos;
@@ -81,6 +112,73 @@ static int GetOctave(int midiNote)
     return (midiNote / 12) - 1;  // Subtract 1 because MIDI note 0 = C–1
 }
 
+static void NoteOn(AudioState& state, int track, int note)
+{
+    double freq = Soulcast::Audio::MidiNoteToFreq(note);
+
+    state.tracks[track].active = true;
+    state.tracks[track].currentNote = note;
+    state.tracks[track].currentFrequency = freq;
+
+#if SOULCAST_USING_SDL3
+    // SDL_LockAudioStream(Soulcast::AudioDevice::audioStream);
+    // SDL_UnlockAudioStream(Soulcast::AudioDevice::audioStream);
+#endif
+}
+
+static void NoteOff(AudioState& state, int track, int note)
+{
+    /*
+    if (state.tracks[track].currentNote == note)
+    {
+        Soulcast::AudioDevice::NoteOff(track);
+        state.tracks[track].active = false;
+    }
+    */
+
+    if (state.tracks[track].currentNote == note)
+    {
+        state.tracks[track].active = false;
+    }
+
+#if SOULCAST_USING_SDL3
+    // SDL_LockAudioStream(Soulcast::AudioDevice::audioStream);
+    // SDL_UnlockAudioStream(Soulcast::AudioDevice::audioStream);
+#endif
+}
+
+static void ProcessMIDI(double time, std::vector<ScheduledMidiEvent>& queue, AudioState& state, size_t& eventIndex)
+{
+    if (!state.active) return;
+
+    state.time = time;
+
+    while (eventIndex < queue.size() && queue[eventIndex].timeInSeconds <= state.time)
+    {
+        const auto& ev = queue[eventIndex];
+        if (ev.isNoteOn)
+        {
+            NoteOn(state, ev.track, ev.note);
+        }
+        else
+        {
+            NoteOff(state, ev.track, ev.note);
+        }
+        ++eventIndex;
+    }
+}
+
+static void loadPCMFile(int test)
+{
+    std::ostringstream filename;
+    filename << "Data/SoundFX/programmable_wave_samples/";
+    filename << std::setw(2) << std::setfill('0') << test;
+    filename << ".pcm";
+    Soulcast::AudioDevice::soundChip.channels[Soulcast::Audio::Channel::PCM].pcm = Soulcast::Audio::Load4BitPCMFile(filename.str().c_str());
+
+    std::cout << "Loading sample " << filename.str() << std::endl;
+}
+
 MusicEditor::MusicEditor(const QString& path, QWidget *parent)
     : QWidget(parent)
     , pianoWidget(new PianoWidget(this))
@@ -102,6 +200,8 @@ MusicEditor::~MusicEditor()
 
 void MusicEditor::Init(const QString &path)
 {
+    loadPCMFile(3);
+
     // UI
     {
         // Tracks
@@ -138,6 +238,8 @@ void MusicEditor::Init(const QString &path)
         data->midifile.read(path.toStdString());
         data->midifile.doTimeAnalysis();
 
+        const auto startTrack = 2;
+
         // @Note: sometimes, getting the initial tempo will not work!
         // Pls fix!!!
         // smw.mid = tempo = 132;
@@ -145,18 +247,23 @@ void MusicEditor::Init(const QString &path)
         data->tempo = GetInitialTempo(data->midifile);
 
         data->duration = data->midifile.getFileDurationInSeconds();
-        // data->eventQueue = Soulcast::Audio::BuildEventQueue(data->midifile);
+        data->eventQueue = BuildEventQueue(data->midifile, startTrack);
 
-        data->eventQueue = Soulcast::Audio::BuildEventQueue(data->midifile);
+        // data->state.resize(data->midifile.getTrackCount());
 
-        data->state.resize(data->midifile.getTrackCount());
+        for (int i = startTrack; i < data->midifile.getTrackCount(); i++)
+        {
+            auto voice = AudioState::Voice();
+            voice.channel = i - startTrack;
 
-        auto& midi = data->midifile;
+            data->state.tracks.push_back(voice);
+        }
 
+        const auto& midi = data->midifile;
         const auto numTracks = midi.getTrackCount();
 
-        data->tracks.resize(numTracks);
-        for (int t = 0; t < numTracks; ++t)
+        data->tracks.resize(numTracks - startTrack);
+        for (int t = startTrack; t < numTracks; ++t)
         {
             auto& track = midi[t];
             for (int i = 0; i < track.size(); i++)
@@ -177,13 +284,13 @@ void MusicEditor::Init(const QString &path)
                         }
                     }
 
-                    data->tracks[t].push_back({ ev.seconds, endSeconds, ev.getKeyNumber() });
+                    data->tracks[t - startTrack].push_back({ ev.seconds, endSeconds, ev.getKeyNumber() });
                 }
             }
         }
     }
 
-    Soulcast::AudioDevice::Init(&data->state);
+    connect(&playbackTimer, &QTimer::timeout, this, &MusicEditor::ProcessAudio);
 }
 
 void MusicEditor::Start()
@@ -192,8 +299,6 @@ void MusicEditor::Start()
     data->state.active = true;
 
     startTime = QDateTime::currentMSecsSinceEpoch() / 1000.0;
-
-    connect(&playbackTimer, &QTimer::timeout, this, &MusicEditor::ProcessAudio);
 
     playbackTimer.start(1);
 
@@ -208,6 +313,11 @@ void MusicEditor::Stop()
 
     playbackTimer.stop();
     m_playing = false;
+
+    for (auto& track : data->state.tracks)
+    {
+        Soulcast::AudioDevice::SetChannelActive(track.channel, false);
+    }
 }
 
 void MusicEditor::SwitchTrack(int t)
@@ -218,7 +328,10 @@ void MusicEditor::SwitchTrack(int t)
     {
         data->state.tracks[i].silenced = true;
     }
-    data->state.tracks[t + 2].silenced = false;
+    if (t < data->state.tracks.size())
+    {
+        data->state.tracks[t].silenced = false;
+    }
 
     update();
 }
@@ -227,9 +340,17 @@ void MusicEditor::ProcessAudio()
 {
     double now = QDateTime::currentMSecsSinceEpoch() / 1000.0;
     double elapsed = now - startTime;
+    // double elapsed = data->songPosition + 1.0 / 120.0;
     data->songPosition = elapsed;
 
-    Soulcast::AudioDevice::ProcessMIDI(data->songPosition, data->eventQueue, data->state, data->eventIndex);
+    ProcessMIDI(data->songPosition, data->eventQueue, data->state, data->eventIndex);
+
+    for (auto& track : data->state.tracks)
+    {
+        Soulcast::AudioDevice::SetChannelActive(track.channel, track.active && !track.silenced);
+        Soulcast::AudioDevice::SetChannelFrequency(track.channel, track.currentFrequency);
+    }
+
     update();
 }
 
@@ -394,12 +515,15 @@ void PianoWidget::paintEvent(QPaintEvent* )
             const int startIndex = 0;
             const auto& track = data->tracks[t];
 
-            auto color = trackColor1;
+            QColor color;
 
-            if (t == 3)
-                color = trackColor2;
-            if (t == 4)
-                color = trackColor3;
+            switch (t)
+            {
+            case 0:  color = trackColor1; break;
+            case 1:  color = trackColor2; break;
+            case 2:  color = trackColor3; break;
+            default: color = trackColor0; break;
+            }
 
             p.setBrush(color);
 
@@ -437,7 +561,7 @@ void PianoWidget::paintEvent(QPaintEvent* )
         {
             // drawTrack(t);
         }
-        drawTrack(editor->currentTrack + 2);
+        drawTrack(editor->currentTrack);
         p.restore();
 
         p.setRenderHint(QPainter::Antialiasing, false);
@@ -502,8 +626,8 @@ void PianoWidget::paintEvent(QPaintEvent* )
         {
             p.save();
 
-            const int notePlaying = data->state.tracks[editor->currentTrack + 2].currentNote;
-            if (data->state.tracks[editor->currentTrack + 2].active)
+            const int notePlaying = data->state.tracks[editor->currentTrack].currentNote;
+            if (data->state.tracks[editor->currentTrack].active)
             {
                 p.setBrush(qApp->palette().highlight());
                 p.drawRect(0, NOTE_TO_Y(notePlaying), KEYBOARD_WIDTH, pianoRowHeight);
@@ -723,7 +847,7 @@ TracksWidget::TracksWidget(MusicEditor* editor, QWidget *parent)
 
 void TracksWidget::paintEvent(QPaintEvent *)
 {
-    const auto CHANNEL_COUNT = Soulcast::Audio::CHANNEL_COUNT;
+    const auto CHANNEL_COUNT = Soulcast::Audio::Channel::Count;
 
     const auto zoomX = 1;
     const auto zoomY = 1;
@@ -779,7 +903,7 @@ void TracksWidget::paintEvent(QPaintEvent *)
 
 void TracksWidget::mousePressEvent(QMouseEvent* event)
 {
-    if (m_highlight >= 0 && m_highlight < Soulcast::Audio::CHANNEL_COUNT)
+    if (m_highlight >= 0 && m_highlight < Soulcast::Audio::Channel::Count)
     {
         editor->SwitchTrack(m_highlight);
     }
@@ -792,7 +916,7 @@ void TracksWidget::mouseReleaseEvent(QMouseEvent* event)
 
 void TracksWidget::mouseMoveEvent(QMouseEvent* event)
 {
-    const auto channelRowHeight = (height() / Soulcast::Audio::CHANNEL_COUNT) * 1;
+    const auto channelRowHeight = (height() / Soulcast::Audio::Channel::Count) * 1;
 
     if (event->x() < TRACK_INFO_WIDTH && event->y() > 0)
     {

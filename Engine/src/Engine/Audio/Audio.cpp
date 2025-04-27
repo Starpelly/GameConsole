@@ -8,78 +8,16 @@ using namespace Soulcast::Audio;
 
 SDL_AudioDeviceID AudioDevice::streamDeviceID;
 SDL_AudioStream* AudioDevice::audioStream;
+SoundChip AudioDevice::soundChip;
 
 static void audioCallback(void* userdata, Uint8* stream, int len)
 {
-	AudioState* state = (AudioState*)userdata;
+	auto* chip = reinterpret_cast<SoundChip*>(userdata);
 
-	float* out = reinterpret_cast<float*>(stream);
-	int totalSamples = len / sizeof(float); // stereo float = 2 per frame
+	int numSamples = len / sizeof(float) / 2;
+	float* floatStream = reinterpret_cast<float*>(stream);
 
-	for (int i = 0; i < totalSamples; i += 2)
-	{
-		float l = 0.0f, r = 0.0f;
-
-		// l += Engine.soundChip.pulse1.GenerateSample();
-		// r += Engine.soundChip.pulse2.GenerateSample();
-
-		// auto[pcmL, pcmR] = Engine.soundChip.pcm.GenerateSample();
-		// l += pcmL;
-		// r += pcmR;
-
-		// float noiseSample = Engine.soundChip.noise.GenerateSample() * 0.5f;
-		// l += noiseSample;
-		// r += noiseSample;
-
-		// for (auto& voice : Engine.soundChip.state.tracks)
-        if (state->active)
-		for (int track = 0; track < state->tracks.size(); track++)
-		{
-			auto& voice = state->tracks[track];
-            if (!voice.active || voice.silenced) continue;
-
-			switch (track - 2)
-			{
-			case CHANNEL_PULSE_0:
-			case CHANNEL_PULSE_1:
-			default:
-			{
-				// @HACK - The first two tracks are pulse waves, not square waves,
-				// Fix it, you retard!!!
-
-				float value = static_cast<float>((fmod(voice.phase, 1.0) < 0.5 ? 1.0 : -1.0));
-				l += value * 0.9;
-				r += value * 0.9;
-
-				// double value = Engine.soundChip.pulse1.GenerateSample(voice.freq);
-				// sample += value * 0.2f;
-			}
-			break;
-			case CHANNEL_PCM:
-			{
-				/*
-				auto [pcmL, pcmR] = Engine.soundChip.pcm.GenerateSample(voice.freq);
-				l += pcmL;
-				r += pcmR;
-				*/
-			}
-			break;
-			case CHANNEL_NOISE:
-			{
-
-			}
-			break;
-			}
-
-			voice.phase += voice.freq / AUDIO_SAMPLERATE;
-		}
-
-		l *= 0.2;
-		r *= 0.2;
-
-		out[i + 0] = std::clamp(l, -1.0f, 1.0f);
-		out[i + 1] = std::clamp(r, -1.0f, 1.0f);
-	}
+	AudioDevice::GenerateAudio(floatStream, numSamples, AUDIO_SAMPLERATE);
 }
 
 #if SOULCAST_USING_SDL3
@@ -130,7 +68,7 @@ PCMChannel Audio::Load4BitPCMFile(const char* filename)
 	return channel;
 }
 
-void AudioDevice::Init(AudioState* state)
+void AudioDevice::Init()
 {
 #if SOULCAST_USING_SDL3
 	if (!SDL_InitSubSystem(SDL_INIT_AUDIO))
@@ -147,7 +85,7 @@ void AudioDevice::Init(AudioState* state)
 		SDL_AUDIO_DEVICE_DEFAULT_PLAYBACK,
 		&spec,
 		SDL3_AudioCallback,
-		state);
+		&soundChip);
 	if (!audioStream)
 		throw std::runtime_error(SDL_GetError());
 	streamDeviceID = SDL_GetAudioStreamDevice(audioStream);
@@ -155,42 +93,14 @@ void AudioDevice::Init(AudioState* state)
 	// Start audio
 	SDL_ResumeAudioDevice(streamDeviceID);
 #endif
-}
 
-static void NoteOn(AudioState& audio, int track, int note)
-{
-	if (track < 0 || track >= (int)audio.tracks.size()) return;
-	double freq = Audio::MidiNoteToFreq(note);
-
-#if SOULCAST_USING_SDL3
-	SDL_LockAudioStream(AudioDevice::audioStream);
-    // audio.tracks[track] = { true, audio.tracks[track].silenced, freq, 0.0, note };
-    audio.tracks[track].active = true;
-    audio.tracks[track].freq = freq;
-    audio.tracks[track].phase = 0.0;
-    audio.tracks[track].currentNote = note;
-
-	SDL_UnlockAudioStream(AudioDevice::audioStream);
-#endif
-}
-
-static void NoteOff(AudioState& audio, int track, int note)
-{
-	if (track < 0 || track >= (int)audio.tracks.size()) return;
-
-#if SOULCAST_USING_SDL3
-	SDL_LockAudioStream(AudioDevice::audioStream);
-	if (audio.tracks[track].currentNote == note)
+	for (auto i = 0; i < soundChip.channels.size(); i++)
 	{
-		audio.tracks[track].active = false;
+		soundChip.channels[i].type = i;
 	}
-	SDL_UnlockAudioStream(AudioDevice::audioStream);
-#endif
 }
 
-float zoom = 1;
-float xpos = 0;
-
+#if false
 void AudioDevice::TestMIDIDraw(std::vector<ScheduledMidiEvent>& queue, AudioState& audio, double totalDuration)
 {
 	Drawing::ClearScreen(0);
@@ -278,27 +188,7 @@ void AudioDevice::TestMIDIDraw(std::vector<ScheduledMidiEvent>& queue, AudioStat
 	float cursorX = ((audio.time - xpos) * pixelsPerSecond);
 	Drawing::DrawRectangle(cursorX, 0, 1, SCREEN_YSIZE, 0xFF00);
 }
-
-void AudioDevice::ProcessMIDI(double time, std::vector<ScheduledMidiEvent>& queue, AudioState& audio, size_t& eventIndex)
-{
-    if (!audio.active) return;
-
-    audio.time = time;
-
-    while (eventIndex < queue.size() && queue[eventIndex].timeInSeconds <= audio.time)
-	{
-		const auto& ev = queue[eventIndex];
-		if (ev.isNoteOn)
-		{
-			NoteOn(audio, ev.track, ev.note);
-		}
-		else
-		{
-			NoteOff(audio, ev.track, ev.note);
-		}
-		++eventIndex;
-	}
-}
+#endif
 
 void AudioDevice::Release()
 {
@@ -311,31 +201,90 @@ void AudioDevice::Release()
 #endif
 }
 
-std::vector<ScheduledMidiEvent> Soulcast::Audio::BuildEventQueue(MidiFile& midi)
+void AudioDevice::GenerateAudio(float* stream, int numSamples, int sampleRate)
 {
-	std::vector<Audio::ScheduledMidiEvent> events;
-	int numTracks = midi.getTrackCount();
+	memset(stream, 0, sizeof(float) * numSamples * 2); // *2 for stereo
 
-	for (int track = 0; track < numTracks; ++track)
+	for (auto& ch : soundChip.channels)
 	{
-		for (int i = 0; i < midi[track].size(); i++)
-		{
-			auto& ev = midi[track][i];
+		if (!ch.active)
+			continue;
 
-			if (ev.isNoteOn())
+		switch (ch.type)
+		{
+		case Channel::Pulse0:
+		case Channel::Pulse1:
+		{
+			double phaseIncrement = ch.frequency / sampleRate;
+
+			for (int i = 0; i < numSamples; ++i)
 			{
-				events.push_back({ ev.seconds, ev.track, ev.getKeyNumber(), true });
+				float value = (std::fmod(ch.phase, 1.0) < 0.5) ? 1.0f : -1.0f;
+				value *= 0.2f; // small volume
+
+				stream[i * 2 + 0] += value; // Left
+				stream[i * 2 + 1] += value; // Right
+
+				ch.phase += phaseIncrement;
+				if (ch.phase >= 1.0)
+					ch.phase -= 1.0;
 			}
-			else if (ev.isNoteOff())
+		}
+		break;
+		case Channel::PCM:
+		{
+			for (int i = 0; i < numSamples; ++i)
 			{
-				events.push_back({ ev.seconds, ev.track, ev.getKeyNumber(), false });
+				if (!ch.pcm.empty)
+				{
+					// Calculate index into 32-sample table
+					size_t index = static_cast<size_t>(ch.phase) % 32;
+					int16_t value = ch.pcm.data[index];
+
+					// Normalize 4-bit sample (0-15) to float -1.0 to +1.0
+					float sample = ((value / 15.0f) * 2.0f) - 1.0f;
+
+					// Equal-power pan
+					// Maybe this should be a macro?
+					float left = sample * std::sqrtf((1.0f - ch.pan) * 0.5f);
+					float right = sample * std::sqrtf((1.0f + ch.pan) * 0.5f);
+
+					// Advance phase
+					ch.phase += ch.frequency * 32.0f / sampleRate;
+					if (ch.phase >= 32.0f) ch.phase -= 32.0f;
+
+					stream[i * 2 + 0] += left * 0.2f;
+					stream[i * 2 + 1] += right * 0.2f;
+				}
 			}
+		}
+		break;
 		}
 	}
 
-	std::sort(events.begin(), events.end(),
-		[](const Audio::ScheduledMidiEvent& a, const Audio::ScheduledMidiEvent& b) {
-			return a.timeInSeconds < b.timeInSeconds;
-		});
-	return events;
+	// @FIX - Please look into clamping!
+
+	/*
+	for (int i = 0; i < numSamples; i += 2)
+	{
+		stream[i + 0] = std::clamp(l, -1.0f, 1.0f);
+		stream[i + 1] = std::clamp(r, -1.0f, 1.0f);
+	}
+	*/
+}
+
+void AudioDevice::SetChannelFrequency(int channelIndex, double frequency)
+{
+	if (channelIndex >= 0 && channelIndex < Channel::Count)
+	{
+		soundChip.channels[channelIndex].frequency = frequency;
+	}
+}
+
+void AudioDevice::SetChannelActive(int channelIndex, bool active)
+{
+	if (channelIndex >= 0 && channelIndex < Channel::Count)
+	{
+		soundChip.channels[channelIndex].active = active;
+	}
 }

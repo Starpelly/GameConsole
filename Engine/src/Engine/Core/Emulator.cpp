@@ -6,8 +6,6 @@ static MidiFile midifile;
 double duration = 0.0;
 size_t eventIndex = 0;
 
-std::vector<Audio::ScheduledMidiEvent> eventQueue;
-
 bool Emulator::Init(SDL_Window* window)
 {
 #if SOULCAST_USING_SDL3
@@ -114,8 +112,6 @@ bool Emulator::Init(SDL_Window* window)
     this->running = true;
     this->mode = EMU_MAINGAME;
 
-    AudioDevice::Init(&this->soundChip.state);
-
     this->targetFreq = SDL_GetPerformanceFrequency() / this->refreshRate;
     this->curTicks = 0;
     this->prevTicks = 0;
@@ -124,9 +120,8 @@ bool Emulator::Init(SDL_Window* window)
     midifile.doTimeAnalysis();
 
     duration = midifile.getFileDurationInSeconds();
-    eventQueue = Audio::BuildEventQueue(midifile);
 
-    this->soundChip.state.resize(midifile.getTrackCount());
+    // this->soundChip.state.resize(midifile.getTrackCount());
 
     Engine.runningEmulator = this;
 
@@ -136,21 +131,8 @@ bool Emulator::Init(SDL_Window* window)
     return 0;
 }
 
-static void loadPCMFile(Emulator* emu, int test)
-{
-    std::ostringstream filename;
-    filename << "Data/SoundFX/programmable_wave_samples/";
-    filename << std::setw(2) << std::setfill('0') << test;
-    filename << ".pcm";
-    emu->soundChip.pcm = Audio::Load4BitPCMFile(filename.str().c_str());
-
-    std::cout << "Loading sample " << filename.str() << std::endl;
-}
-
 void Emulator::Run()
 {
-    loadPCMFile(this, 3);
-
     while (this->running)
     {
         DoOneFrame();
@@ -240,7 +222,6 @@ void Emulator::Release()
 #endif
 
     Engine.runningEmulator = nullptr;
-    ScriptingEngine::Reset();
 }
 
 void Emulator::ResetSystem()
@@ -262,12 +243,39 @@ bool Emulator::ProcessEvent()
         this->mode = EMU_EXITGAME; return false;
 
     case SDL_EVENT_KEY_DOWN:
+    {
         auto key = event.key.scancode;
 
         if (key == SDL_SCANCODE_R) // I'm lazy
         {
             ResetSystem();
         }
+        if (key == SDL_SCANCODE_A)
+        {
+            AudioDevice::SetChannelActive(Audio::Channel::PCM, true);
+            AudioDevice::SetChannelFrequency(Audio::Channel::PCM, 440);
+        }
+        if (key == SDL_SCANCODE_S)
+        {
+            AudioDevice::SetChannelActive(Audio::Channel::Pulse0, true);
+            AudioDevice::SetChannelFrequency(Audio::Channel::Pulse0, 440);
+        }
+    }
+        break;
+
+    case SDL_EVENT_KEY_UP:
+    {
+        auto key = event.key.scancode;
+
+        if (key == SDL_SCANCODE_A)
+        {
+            AudioDevice::SetChannelActive(Audio::Channel::PCM, false);
+        }
+        if (key == SDL_SCANCODE_S)
+        {
+            AudioDevice::SetChannelActive(Audio::Channel::Pulse0, false);
+        }
+    }
         break;
     }
 
