@@ -138,7 +138,7 @@ static void DrawString(const std::string& text, int32 x, int32 y, int32 width)
 			}
 		}
 
-		PPU::DrawSpriteRegion(&font, charX, charY, sprX, 0, 8, 8);
+		Drawing::DrawSpriteRegion(&font, charX, charY, sprX, 0, 8, 8);
 
 		charX += 8;
 	}
@@ -233,6 +233,10 @@ void ScriptingEngine::Init()
 
 void ScriptingEngine::Release()
 {
+	if (L)
+	{
+		lua_close(L);
+	}
 }
 
 void ScriptingEngine::UpdateScripts()
@@ -248,12 +252,12 @@ void ScriptingEngine::UpdateScripts()
 
 void ScriptingEngine::RenderScripts()
 {
-	// PPU::ClearScreen(9);
+	// Drawing::ClearScreen(9);
 
 	if (hadErrors)
 	{
-		PPU::ClearScreen(RGB888_TO_RGB565(147, 0, 0));
-		PPU::SetColorMode(ColorMode::Direct);
+		Drawing::ClearScreen(RGB888_TO_RGB565(147, 0, 0));
+		Drawing::SetColorMode(ColorMode::Direct);
 
 		DrawString("Script Error:", 8, 8, SCREEN_XSIZE);
 		DrawString(errorStr, 8, 32, SCREEN_XSIZE - 8);
@@ -301,12 +305,12 @@ void ScriptingEngine::InitLua()
 		state[LUA_NAME]["memory"]["write"] = &Memory::Poke;
 
 		// Drawing
-		state[LUA_NAME]["clearScreen"] = &PPU::ClearScreen;
-		state[LUA_NAME]["setScreenPosition"] = &PPU::SetScreenPosition;
-		state[LUA_NAME]["drawRectangle"] = &PPU::DrawRectangle;
-		state[LUA_NAME]["drawBackground"] = &PPU::DrawBackground;
-		state[LUA_NAME]["drawSprite"] = &PPU::DrawSprite;
-		state[LUA_NAME]["drawSpriteRegion"] = &PPU::DrawSpriteRegion;
+		state[LUA_NAME]["clearScreen"] = &Drawing::ClearScreen;
+		state[LUA_NAME]["setScreenPosition"] = &Drawing::SetScreenPosition;
+		state[LUA_NAME]["drawRectangle"] = &Drawing::DrawRectangle;
+		state[LUA_NAME]["drawBackground"] = &Drawing::DrawBackground;
+		state[LUA_NAME]["drawSprite"] = &Drawing::DrawSprite;
+		state[LUA_NAME]["drawSpriteRegion"] = &Drawing::DrawSpriteRegion;
 
 		// Palettes
 		state[LUA_NAME]["loadPalette"] = &Palette::LoadPaletteBank;

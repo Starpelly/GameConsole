@@ -15,6 +15,7 @@ find_package(Qt${QT_VERSION_MAJOR} REQUIRED COMPONENTS Widgets WebEngineWidgets)
 set(SOULCAST_SDK_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src)
 set(SOULCAST_SDK_VENDOR_DIR ${CMAKE_CURRENT_SOURCE_DIR}/vendor)
 set(SOULCAST_SDK_RESOURCES_DIR ${CMAKE_CURRENT_SOURCE_DIR}/resources)
+set(SOULCAST_ENGINE_PCH_FILE ${SOULCAST_SDK_SOURCE_DIR}/SDK.hpp)
 
 #    set(PROJECT_SOURCES
 #        ${SOULCAST_SDK_SOURCE_DIR}/main.cpp
@@ -92,6 +93,13 @@ install(TARGETS SoulcastSDK
 
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(SoulcastSDK)
+endif()
+
+#--------------------------------------------------------------------
+# PCH
+#--------------------------------------------------------------------
+if(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|MSVC")
+	target_precompile_headers(SoulcastSDK PRIVATE ${SOULCAST_ENGINE_PCH_FILE})
 endif()
 
 #--------------------------------------------------------------------

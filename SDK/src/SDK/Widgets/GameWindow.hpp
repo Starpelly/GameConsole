@@ -28,6 +28,7 @@ signals:
 private:
     Ui::GameWindow *ui;
 
+    Soulcast::Emulator m_emulator;
     QTimer timer;
 };
 

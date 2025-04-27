@@ -1,9 +1,15 @@
 #pragma once
+#if false
 
 #include <SDL3/SDL.h>
 
 #include <QWidget>
 #include <QTimer>
+
+namespace Soulcast
+{
+    class Emulator;
+}
 
 class SDLRenderer final : public QObject
 {
@@ -27,3 +33,4 @@ private:
 
     uintptr_t getWindowHandle();
 };
+#endif

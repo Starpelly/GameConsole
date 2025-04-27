@@ -3,7 +3,10 @@
 #include "Engine/Core/Engine.hpp"
 #include "SDK.hpp"
 
-SDLWindow::SDLWindow(QWidget* parent) : QWidget(parent), m_Timer(this)
+SDLWindow::SDLWindow(Soulcast::Emulator* emu, QWidget* parent)
+    : QWidget(parent)
+    , m_emulator(emu)
+    , m_Timer(this)
 {
     // Turn off double buffering for this widget. Double buffering
     // interferes with the ability for SDL to be properly displayed
@@ -46,9 +49,8 @@ void SDLWindow::initialize()
 
         m_Window = SDL_CreateWindowWithProperties(properties);
 
-        Soulcast::Engine.debugMode = false;
-        Soulcast::Engine.windowContained = true;
-        Soulcast::Engine.Init(SDK::GetProjectPath().toStdString().c_str(), m_Window);
+        m_emulator->windowContained = true;
+        m_emulator->Init(m_Window);
 
         SDL_DestroyProperties(properties);
     }
@@ -59,8 +61,6 @@ void SDLWindow::initialize()
 void SDLWindow::shutdown()
 {
     m_Timer.stop();
-
-    Soulcast::Engine.Release();
 }
 
 // ===============
@@ -72,7 +72,7 @@ void SDLWindow::render()
     if (!Soulcast::Engine.initialized)
         return;
 
-    Soulcast::Engine.DoOneFrame();
+    m_emulator->DoOneFrame();
 
     // Schedule the next frame as soon as possible
     QMetaObject::invokeMethod(this, "render", Qt::QueuedConnection);

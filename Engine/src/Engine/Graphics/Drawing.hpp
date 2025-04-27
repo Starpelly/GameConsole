@@ -9,15 +9,29 @@ namespace Soulcast
 
 	struct ScreenInfo
 	{
-		uint16* frameBuffer;
-		Vector2 position;
-		Vector2 size;
+		uint16* frameBuffer = nullptr;
+		Vector2 position{};
+		Vector2 size{};
 
-		int32 pitch;
-		int32 clipBound_X1;
-		int32 clipBound_Y1;
-		int32 clipBound_X2;
-		int32 clipBound_Y2;
+		int32 pitch = 0;
+		int32 clipBound_X1 = 0;
+		int32 clipBound_Y1 = 0;
+		int32 clipBound_X2 = 0;
+		int32 clipBound_Y2 = 0;
+
+		bool ownsFrameBuffer = false; // Used for the destructor
+
+#if SOULCAST_USING_SDL3
+		SDL_Texture* screenTexture = nullptr;
+#endif
+
+		~ScreenInfo()
+		{
+			if (ownsFrameBuffer)
+			{
+				free(frameBuffer);
+			}
+		}
 	};
 
 	enum class ColorMode
@@ -34,17 +48,12 @@ namespace Soulcast
 	};
 
 	/// The Picture Processing Unit
-	class PPU
+	class Drawing
 	{
 	public:
-		// static uint16* frameBuffer;
-		// static uint16* debugFrameBuffer;
-		static ScreenInfo gameScreen;
-		static ScreenInfo debugScreen;
-
 		static void Init();
 		static void Release();
-		static void Present();
+		static void Present(const ScreenInfo& screen, int32 x, int32 y, int32 w, int32 h);
 		static void SetActiveScreen(ScreenInfo* screen);
 
 		static void RenderPalette(int32 bank, int32 y);
@@ -67,5 +76,8 @@ namespace Soulcast
 		static void DrawSpriteRegion(Sprite* sprite, int32 x, int32 y, int32 sprX, int32 sprY, int32 sprWidth, int32 sprHeight, SpriteFlip flip = FLIP_NONE);
 
 		static void ApplyMosaicEffect(int32 size);
+
+	public:
+		static void InitScreenInfo(ScreenInfo* screen, int32 width, int32 height, bool gameScreen);
 	};
 }

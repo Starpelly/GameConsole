@@ -39,12 +39,12 @@ constexpr auto SCREEN_XSIZE_WIDE = (static_cast<int>((16.0f / 9.0f) * 240));
 	#include <SDL3/SDL.h>
 #endif
 
-enum SoulcastStates
+enum EmulatorStates
 {
-	ENGINE_MAINGAME,
-	ENGINE_EXITGAME,
-	ENGINE_PAUSE,
-	ENGINE_WAIT
+	EMU_MAINGAME,
+	EMU_EXITGAME,
+	EMU_PAUSE,
+	EMU_WAIT
 };
 
 // ===============
@@ -61,7 +61,7 @@ enum SoulcastStates
 #include "Engine/CPU/CPU.hpp"
 
 #include "Engine/Graphics/Palette.hpp"
-#include "Engine/Graphics/PPU.hpp"
+#include "Engine/Graphics/Drawing.hpp"
 #include "Engine/Graphics/Sprite.hpp"
 
 #include "Engine/Input/Input.hpp"
@@ -72,68 +72,21 @@ enum SoulcastStates
 
 #include "Engine/Scene/Scene.hpp"
 
+#include "Engine/Core/Emulator.hpp"
+
 namespace Soulcast
 {
-	struct DebugMode
-	{
-		int8 palette;
-	};
-
 	class SOULCAST_API SoulcastEngine
 	{
 	public:
 		SoulcastEngine() = default;
 
 		bool Init(const char* workingDir, SDL_Window* window = nullptr);
-		void Run();
-        void DoOneFrame();
 		void Release();
-
-        void ResetSystem();
-
-#if SOULCAST_USING_SDL3
-        bool ProcessEvent(const SDL_Event& event);
-#endif
 
 	public:
 		bool initialized			= false;
-		bool running				= false;
-		bool debugMode				= true;
-		DebugMode debug{};
-
-		SoulcastStates mode			= ENGINE_MAINGAME;
-
-		bool borderless				= false;
-		bool vsync					= false;
-        bool windowContained        = false;
-
-		int scalingMode				= 0;
-		int windowScale				= 4;
-		int refreshRate				= REFRESH_RATE;
-		int screenRefreshRate		= REFRESH_RATE;
-		int targetRefreshRate		= REFRESH_RATE;
-
-		int gameSpeed				= 1;
-		bool frameStep				= false;
-        bool masterPaused           = false;
-		double time					= 0.0;
-
-        uint64 targetFreq           = 0;
-        uint64 curTicks             = 0;
-        uint64 prevTicks            = 0;
-
-		SoundChip soundChip;
-		PPU ppu;
-
-	#if SOULCAST_USING_SDL3
-		SDL_Window* window			= nullptr;
-		SDL_Renderer* renderer		= nullptr;
-		SDL_Texture* screenBuffer	= nullptr;
-		SDL_Texture* dbScreenBuffer	= nullptr;
-	#endif
-
-		// Audio interpolation settings pls
-
+		Emulator* runningEmulator	= nullptr;
 	};
 
 	extern SOULCAST_API SoulcastEngine Engine;

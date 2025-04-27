@@ -3,7 +3,12 @@
 int main(int argc, char* argv[])
 {
 	Soulcast::Engine.Init("D:/Soulcast/test/Sandbox");
-	Soulcast::Engine.Run();
+
+	Soulcast::Emulator emu;
+	emu.Init();
+	emu.Run();
+	emu.Release();
+
 	Soulcast::Engine.Release();
 
 	return 0;

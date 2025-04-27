@@ -80,8 +80,8 @@ void TestGame::Update()
 		// loadPCMFile(fileTest);
 	}
 
-	auto mousePan = Math::lerp(-1, 1, ((float)Input::mouseX) / (SCREEN_XSIZE * Engine.windowScale));
-	auto mouseFreq = -(Input::mouseY - (SCREEN_YSIZE * Engine.windowScale));
+	auto mousePan = Math::lerp(-1, 1, ((float)Input::mouseX) / (SCREEN_XSIZE * Engine.runningEmulator->windowScale));
+	auto mouseFreq = -(Input::mouseY - (SCREEN_YSIZE * Engine.runningEmulator->windowScale));
 	// AudioDevice::SetPCMFreq(mouseFreq);
 	// AudioDevice::SetPCMPan(0.0f);
 }
@@ -100,7 +100,7 @@ static float t()
 
 void TestGame::Render()
 {
-	PPU::ClearScreen(9);
+	Drawing::ClearScreen(9);
 	Palette::SetActivePalette(0);
 
 #if false
@@ -115,18 +115,18 @@ void TestGame::Render()
 	}
 #endif
 
-	// PPU::SetScreenPosition(-State.cameraPos.x, -State.cameraPos.y);
+	// Drawing::SetScreenPosition(-State.cameraPos.x, -State.cameraPos.y);
 
-	PPU::DrawRectangle(0, 0, 32, 32, ACTIVE_PALETTE_ENTRY_TO_RGB565(1));
+	Drawing::DrawRectangle(0, 0, 32, 32, ACTIVE_PALETTE_ENTRY_TO_RGB565(1));
 
 	// Palette::SetActivePalette(1);
-	// PPU::DrawBackground(&testImage2, 0, 192);
+	// Drawing::DrawBackground(&testImage2, 0, 192);
 	
 	// Palette::SetActivePalette(0);
-	// PPU::DrawBackground(&testImage1, 0, 184);
+	// Drawing::DrawBackground(&testImage1, 0, 184);
 
 	// Palette::SetActivePalette(2);
-	// PPU::DrawSprite(&testSprite, 64, 168);
+	// Drawing::DrawSprite(&testSprite, 64, 168);
 }
 
 void PlayerEntity::Update()

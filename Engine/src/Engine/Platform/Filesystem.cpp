@@ -7,7 +7,7 @@ namespace Soulcast
 		SOULCAST_ASSERT_RUNNING();
 
 		Ref<File> ref;
-		if (Engine.running)
+		if (Engine.initialized)
 			ref = Platform::FileOpen(path.string().c_str(), mode);
 		if (ref)
 			ref->m_mode = mode;
@@ -17,7 +17,7 @@ namespace Soulcast
 	bool File::Exists(const FilePath& path)
 	{
 		SOULCAST_ASSERT_RUNNING();
-		if (Engine.running)
+		if (Engine.initialized)
 			return Platform::FileExists(path.string().c_str());
 		return false;
 	}
@@ -25,7 +25,7 @@ namespace Soulcast
 	bool File::Destroy(const FilePath& path)
 	{
 		SOULCAST_ASSERT_RUNNING();
-		if (Engine.running)
+		if (Engine.initialized)
 			return Platform::FileDelete(path.string().c_str());
 		return false;
 	}
@@ -38,7 +38,7 @@ namespace Soulcast
 	bool Directory::Create(const FilePath& path)
 	{
 		SOULCAST_ASSERT_RUNNING();
-		if (Engine.running)
+		if (Engine.initialized)
 			return Platform::DirectoryCreate(path.string().c_str());
 		return false;
 	}
@@ -46,7 +46,7 @@ namespace Soulcast
 	bool Directory::Exists(const FilePath& path)
 	{
 		SOULCAST_ASSERT_RUNNING();
-		if (Engine.running)
+		if (Engine.initialized)
 			return Platform::DirectoryExists(path.string().c_str());
 		return false;
 	}
@@ -54,7 +54,7 @@ namespace Soulcast
 	bool Directory::Destroy(const FilePath& path)
 	{
 		SOULCAST_ASSERT_RUNNING();
-		if (Engine.running)
+		if (Engine.initialized)
 			return Platform::DirectoryDelete(path.string().c_str());
 		return false;
 	}
@@ -65,7 +65,7 @@ namespace Soulcast
 
 		std::vector<FilePath> list;
 
-		if (Engine.running)
+		if (Engine.initialized)
 		{
 			Platform::DirectoryEnumerate(list, path.string().c_str(), recursive);
 			for (auto& it : list)
@@ -81,7 +81,7 @@ namespace Soulcast
 	void Directory::Explore(const FilePath& path)
 	{
 		SOULCAST_ASSERT_RUNNING();
-		if (Engine.running)
+		if (Engine.initialized)
 			Platform::DirectoryExplore(path.string().c_str());
 	}
 

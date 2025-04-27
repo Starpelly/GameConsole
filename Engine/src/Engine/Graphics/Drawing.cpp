@@ -6,17 +6,14 @@ int GFX_LINESIZE;
 
 bool screenRelative = false;
 
-// uint16* PPU::frameBuffer;
-// uint16* PPU::debugFrameBuffer;
-
-ScreenInfo PPU::gameScreen;
-ScreenInfo PPU::debugScreen;
+// uint16* Drawing::frameBuffer;
+// uint16* Drawing::debugFrameBuffer;
 
 ScreenInfo* activeScreen;
 
 ColorMode colorMode;
 
-static void initScreenInfo(ScreenInfo* screen, int32 width, int32 height, bool gameScreen)
+void Drawing::InitScreenInfo(ScreenInfo* screen, int32 width, int32 height, bool gameScreen)
 {
     screen->size.x = width;
     screen->size.y = height;
@@ -25,11 +22,13 @@ static void initScreenInfo(ScreenInfo* screen, int32 width, int32 height, bool g
     {
         // The game screen uses memory pre allocated that the user can read and write to.
         screen->frameBuffer = reinterpret_cast<uint16*>(&Memory::memory[Memory::FRAMEBUFFER_START]);
+        screen->ownsFrameBuffer = false;
     }
     else
     {
         screen->frameBuffer = new uint16[screen->size.x * screen->size.y];
         memset(screen->frameBuffer, 0, (screen->size.x * screen->size.y) * sizeof(uint16));
+        screen->ownsFrameBuffer = true;
     }
 
     screen->pitch = screen->size.x;
@@ -40,89 +39,42 @@ static void initScreenInfo(ScreenInfo* screen, int32 width, int32 height, bool g
     screen->clipBound_Y2 = screen->size.y;
 }
 
-void PPU::Init()
+void Drawing::Init()
 {
-    // Game screen
-    {
-        initScreenInfo(&PPU::gameScreen, SCREEN_XSIZE, SCREEN_YSIZE, true);
-    }
-
-    // Debug screen
-    if (Engine.debugMode)
-    {
-        initScreenInfo(&PPU::debugScreen, DEBUG_XSIZE, SCREEN_YSIZE, false);
-    }
-    
-    // Active screen is the game screen by default
-    activeScreen = &PPU::gameScreen;
     colorMode = ColorMode::Indirect;
 }
 
-void PPU::Release()
+void Drawing::Release()
 {
-    if (Engine.debugMode)
-    {
-        free(PPU::debugScreen.frameBuffer);
-    }
-    // free(PPU::gameScreen.frameBuffer);
 }
 
-void PPU::SetActiveScreen(ScreenInfo* screen)
+void Drawing::SetActiveScreen(ScreenInfo* screen)
 {
     activeScreen = screen;
 }
 
-void PPU::Present()
+void Drawing::Present(const ScreenInfo& screen, int32 x, int32 y, int32 w, int32 h)
 {
 #if SOULCAST_USING_SDL3
     SDL_FRect destScreenPos = { 0 };
-    destScreenPos.x = 0;
-    destScreenPos.y = 0;
-    destScreenPos.w = SCREEN_XSIZE;
-    destScreenPos.h = SCREEN_YSIZE;
-
-    if (Engine.debugMode)
-    {
-        destScreenPos.w = SCREEN_XSIZE * Engine.windowScale;
-        destScreenPos.h = SCREEN_YSIZE * Engine.windowScale;
-    }
+    destScreenPos.x = x;
+    destScreenPos.y = y;
+    destScreenPos.w = w;
+    destScreenPos.h = h;
 
     // Update screen buffer
     {
-        SDL_UpdateTexture(Engine.screenBuffer, NULL, (void*)PPU::gameScreen.frameBuffer, SCREEN_XSIZE * sizeof(uint16));
-
-        if (Engine.debugMode)
-        {
-            SDL_UpdateTexture(Engine.dbScreenBuffer, NULL, (void*)PPU::debugScreen.frameBuffer, DEBUG_XSIZE * sizeof(uint16));
-        }
+        SDL_UpdateTexture(screen.screenTexture, NULL, (void*)screen.frameBuffer, screen.size.x * sizeof(uint16));
     }
-
-    // Clear screen
-    SDL_SetRenderDrawColor(Engine.renderer, 0, 0, 0, 255);
-    SDL_RenderClear(Engine.renderer);
 
     // Actually render the game to the screen
     {
-        SDL_RenderTexture(Engine.renderer, Engine.screenBuffer, NULL, &destScreenPos);
+        SDL_RenderTexture(Engine.runningEmulator->renderer, screen.screenTexture, NULL, &destScreenPos);
     }
-    // Render debug stuff
-    if (Engine.debugMode)
-    {
-        const float screenScale = Engine.windowScale;
-
-        const float debugX = (SCREEN_XSIZE)*screenScale;
-        const float debugWidth = (DEBUG_XSIZE)*screenScale;
-        const float debugHeight = (SCREEN_YSIZE)*screenScale;
-        auto debugRect = CLITERAL(SDL_FRect) { debugX, 0, debugWidth, debugHeight };
-
-        SDL_RenderTexture(Engine.renderer, Engine.dbScreenBuffer, NULL, &debugRect);
-    }
-
-    SDL_RenderPresent(Engine.renderer);
 #endif
 }
 
-void PPU::RenderPalette(int32 bank, int32 y)
+void Drawing::RenderPalette(int32 bank, int32 y)
 {
     const int32 windowPadding = 4;
     const int32 swatchPadding = 0;
@@ -165,7 +117,7 @@ void PPU::RenderPalette(int32 bank, int32 y)
     }
 }
 
-void PPU::ClearScreen(uint16 color)
+void Drawing::ClearScreen(uint16 color)
 {
     // uint16 color = PALETTE_ENTRY_TO_RGB565(colIndex);
     auto* frameBuffer = activeScreen->frameBuffer;
@@ -177,34 +129,34 @@ void PPU::ClearScreen(uint16 color)
     }
 }
 
-void PPU::SetColorMode(ColorMode mode)
+void Drawing::SetColorMode(ColorMode mode)
 {
     colorMode = mode;
 }
 
-uint16 PPU::GetPixel(int32 x, int32 y)
+uint16 Drawing::GetPixel(int32 x, int32 y)
 {
     if (x < activeScreen->clipBound_X1 || y < activeScreen->clipBound_Y1 || x >= activeScreen->clipBound_X2 || y >= activeScreen->clipBound_Y2) return 0;
     return activeScreen->frameBuffer[x + y * activeScreen->pitch];
 }
 
-void PPU::SetPixel(int32 x, int32 y, uint8 color)
+void Drawing::SetPixel(int32 x, int32 y, uint8 color)
 {
     if (x < activeScreen->clipBound_X1 || y < activeScreen->clipBound_Y1 || x >= activeScreen->clipBound_X2 || y >= activeScreen->clipBound_Y2) return;
     activeScreen->frameBuffer[x + y * activeScreen->pitch] = ACTIVE_PALETTE_ENTRY_TO_RGB565(color);
 }
 
-Vector2 PPU::GetScreenPosition()
+Vector2 Drawing::GetScreenPosition()
 {
     return activeScreen->position;
 }
 
-void PPU::SetScreenPosition(int32 x, int32 y)
+void Drawing::SetScreenPosition(int32 x, int32 y)
 {
     activeScreen->position = { x, y };
 }
 
-void PPU::DrawRectangle(int32 x, int32 y, int32 width, int32 height, uint16 color)
+void Drawing::DrawRectangle(int32 x, int32 y, int32 width, int32 height, uint16 color)
 {
     // uint16 color16 = PALETTE_ENTRY_TO_RGB565(colIndex);
     // uint16 color16 = RGB888_TO_RGB565(color.r, color.g, color.b);
@@ -252,7 +204,7 @@ void PPU::DrawRectangle(int32 x, int32 y, int32 width, int32 height, uint16 colo
     }
 }
 
-void PPU::DrawLine(int32 x1, int32 y1, int32 x2, int32 y2, uint16 color)
+void Drawing::DrawLine(int32 x1, int32 y1, int32 x2, int32 y2, uint16 color)
 {
     // uint16 color16 = PALETTE_ENTRY_TO_RGB565(color);
     // uint16 color16 = RGB888_TO_RGB565(color.r, color.g, color.b);
@@ -452,7 +404,7 @@ void PPU::DrawLine(int32 x1, int32 y1, int32 x2, int32 y2, uint16 color)
 	color = fullPalette[paletteIndex].Packed();\
 	transparent = paletteIndex == 0;\
 
-void PPU::DrawBackground(Bitmap* bitmap, int32 x, int32 y)
+void Drawing::DrawBackground(Bitmap* bitmap, int32 x, int32 y)
 {
     // These need to be casted to signed integers because we need negative numbers to wrap properly.
     const auto bitmapWidth = (int32)bitmap->width;
@@ -540,14 +492,14 @@ void PPU::DrawBackground(Bitmap* bitmap, int32 x, int32 y)
     }
 }
 
-void PPU::DrawSprite(Sprite* sprite, int32 x, int32 y)
+void Drawing::DrawSprite(Sprite* sprite, int32 x, int32 y)
 {
     if (sprite->bitmap == nullptr)
         return;
-    PPU::DrawSpriteRegion(sprite, x, y, 0, 0, sprite->bitmap->width, sprite->bitmap->height);
+    Drawing::DrawSpriteRegion(sprite, x, y, 0, 0, sprite->bitmap->width, sprite->bitmap->height);
 }
 
-void PPU::DrawSpriteRegion(Sprite* sprite, int32 x, int32 y, int32 sprX, int32 sprY, int32 sprWidth, int32 sprHeight, SpriteFlip flip)
+void Drawing::DrawSpriteRegion(Sprite* sprite, int32 x, int32 y, int32 sprX, int32 sprY, int32 sprWidth, int32 sprHeight, SpriteFlip flip)
 {
     if (sprite->bitmap == nullptr) return;
 
@@ -697,7 +649,7 @@ void PPU::DrawSpriteRegion(Sprite* sprite, int32 x, int32 y, int32 sprX, int32 s
     }
 }
 
-void PPU::ApplyMosaicEffect(int32 size)
+void Drawing::ApplyMosaicEffect(int32 size)
 {
     if (size <= 1) return; // A value of 1 is visually indistinguishable
 

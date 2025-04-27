@@ -1,3 +1,4 @@
+#if false
 #include "SDLRenderer.hpp"
 
 #include <QWindow>
@@ -55,14 +56,17 @@ static uintptr_t getSDLWindowHandle(SDL_Window* sdl_wnd)
 
 SDLRenderer::SDLRenderer(QObject* parent) : QObject(parent) {
 #if TESTING_ENGINE
-    Soulcast::Engine.debugMode = false;
-    Soulcast::Engine.windowContained = true;
-    Soulcast::Engine.borderless = true;
+    emulator = std::make_unique<Soulcast::Emulator>();
 
+    emulator->debugMode = false;
+    emulator->windowContained = true;
+    emulator->borderless = true;
+
+    emulator->Init();
     Soulcast::Engine.Init(SDK::GetProjectPath().toStdString().c_str());
 
-    wnd = Soulcast::Engine.window;
-    renderer = Soulcast::Engine.renderer;
+    wnd = emulator->window;
+    renderer = emulator->renderer;
 #else
     auto cleanup = [this]
         {
@@ -129,5 +133,6 @@ QWidget* SDLRenderer::ToWidget(QWidget* parent)
 
 void SDLRenderer::DoOneFrame()
 {
-    Soulcast::Engine.DoOneFrame();
+    emulator->DoOneFrame();
 }
+#endif

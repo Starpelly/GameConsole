@@ -193,7 +193,7 @@ float xpos = 0;
 
 void AudioDevice::TestMIDIDraw(std::vector<ScheduledMidiEvent>& queue, AudioState& audio, double totalDuration)
 {
-	PPU::ClearScreen(0);
+	Drawing::ClearScreen(0);
 
 	if (Input::IsButtonPressed(INPUT_DOWN))
 	{
@@ -272,11 +272,11 @@ void AudioDevice::TestMIDIDraw(std::vector<ScheduledMidiEvent>& queue, AudioStat
 				color = RGB888_TO_RGB565(225, 184, 111);
 		}
 
-		PPU::DrawRectangle(x, y, width, height, color);
+		Drawing::DrawRectangle(x, y, width, height, color);
 	}
 
 	float cursorX = ((audio.time - xpos) * pixelsPerSecond);
-	PPU::DrawRectangle(cursorX, 0, 1, SCREEN_YSIZE, 0xFF00);
+	Drawing::DrawRectangle(cursorX, 0, 1, SCREEN_YSIZE, 0xFF00);
 }
 
 void AudioDevice::ProcessMIDI(double time, std::vector<ScheduledMidiEvent>& queue, AudioState& audio, size_t& eventIndex)

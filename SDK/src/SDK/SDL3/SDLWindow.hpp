@@ -5,14 +5,12 @@
 #include <QTimer>
 #include <QThread>
 
-#include <SDL3/SDL.h>
-
 class SDLWindow : public QWidget
 {
     Q_OBJECT
 
 public:
-    explicit SDLWindow(QWidget* parent = nullptr);
+    explicit SDLWindow(Soulcast::Emulator* emu, QWidget* parent = nullptr);
     ~SDLWindow();
 
 private:
@@ -28,4 +26,6 @@ private slots:
 private:
     QPaintEngine* paintEngine() const override;
     bool focusNextPrevChild(bool next) override;
+
+    Soulcast::Emulator* m_emulator = nullptr;
 };

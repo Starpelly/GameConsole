@@ -394,6 +394,15 @@ void PianoWidget::paintEvent(QPaintEvent* )
             const int startIndex = 0;
             const auto& track = data->tracks[t];
 
+            auto color = trackColor1;
+
+            if (t == 3)
+                color = trackColor2;
+            if (t == 4)
+                color = trackColor3;
+
+            p.setBrush(color);
+
             for (int i = startIndex; i < track.size(); i++)
             {
                 const auto& ev = track[i];
@@ -411,20 +420,17 @@ void PianoWidget::paintEvent(QPaintEvent* )
                 const float y = NOTE_TO_Y(ev.note);
                 const float height = pianoRowHeight;
 
-                auto color = trackColor1;
-
-                if (t == 3)
-                    color = trackColor2;
-                if (t == 4)
-                    color = trackColor3;
-
-                p.setBrush(color);
-
                 p.drawRoundedRect(x, y, width, height, 4, 4);
                 // p.drawRect(x, y, width, height);
             }
         };
 
+        p.save();
+
+        auto pen = QPen();
+        pen.setWidth(1);
+
+        p.setPen(pen);
 
         // for (const auto& ev : data->eventQueue)
         for (int t = 0; t < data->tracks.size(); t++)
@@ -432,6 +438,7 @@ void PianoWidget::paintEvent(QPaintEvent* )
             // drawTrack(t);
         }
         drawTrack(editor->currentTrack + 2);
+        p.restore();
 
         p.setRenderHint(QPainter::Antialiasing, false);
     }
@@ -489,6 +496,20 @@ void PianoWidget::paintEvent(QPaintEvent* )
                     p.drawRect(0, y, blackKeyWidth, pianoRowHeight);
                 }
             }
+        }
+
+        // Draw playing note
+        {
+            p.save();
+
+            const int notePlaying = data->state.tracks[editor->currentTrack + 2].currentNote;
+            if (data->state.tracks[editor->currentTrack + 2].active)
+            {
+                p.setBrush(qApp->palette().highlight());
+                p.drawRect(0, NOTE_TO_Y(notePlaying), KEYBOARD_WIDTH, pianoRowHeight);
+            }
+
+            p.restore();
         }
 
         // Draw key labels

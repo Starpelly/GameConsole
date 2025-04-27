@@ -1,7 +1,7 @@
 #include <QApplication>
 #include <phantomstyle.h>
-#include <SDL3/SDL.h>
 
+#include "SDK.hpp"
 #include "SDK/MainWindow.hpp"
 
 static void ApplyStyle()
@@ -43,6 +43,8 @@ int main(int argc, char *argv[])
     if(!sdl_initialized) sdl_initialized = SDL_Init(SDL_INIT_VIDEO);
     if(!sdl_initialized) return -1;
 
+    Soulcast::Engine.Init(SDK::GetProjectPath().toStdString().c_str());
+
     QApplication a(argc, argv);
 
     ApplyStyle();
@@ -53,6 +55,7 @@ int main(int argc, char *argv[])
 
     const auto ret = a.exec();
 
+    Soulcast::Engine.Release();
     SDL_Quit();
 
     return ret;

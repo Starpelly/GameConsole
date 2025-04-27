@@ -21,5 +21,5 @@
 	#define SOULCAST_ASSERT(...)
 	#define SOULCAST_CORE_ASSERT(...)
 
-	#define SOULCAST_ASSERT_RUNNING() SOULCAST_ASSERT(Engine.running)
+	#define SOULCAST_ASSERT_RUNNING() SOULCAST_ASSERT(Engine.initialized)
 #endif

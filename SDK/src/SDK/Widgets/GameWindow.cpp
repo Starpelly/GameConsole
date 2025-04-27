@@ -27,13 +27,13 @@ GameWindow::GameWindow(QWidget *parent)
         const int menuBarHeight = 20;
 
         setWindowTitle("Soulcast");
-        resize(SCREEN_XSIZE * Soulcast::Engine.windowScale, (SCREEN_YSIZE * Soulcast::Engine.windowScale) + statusBarHeight + menuBarHeight);
+        resize(SCREEN_XSIZE * m_emulator.windowScale, (SCREEN_YSIZE * m_emulator.windowScale) + statusBarHeight + menuBarHeight);
     }
 
     // Actions
     {
-        connect(ui->actionReset_System, &QAction::triggered, this, []() {
-            Soulcast::Engine.ResetSystem();
+        connect(ui->actionReset_System, &QAction::triggered, this, [this]() {
+            m_emulator.ResetSystem();
         });
         connect(ui->actionQuit, &QAction::triggered, this, &QMainWindow::close);
     }
@@ -43,7 +43,7 @@ GameWindow::GameWindow(QWidget *parent)
         // sdlRenderer = new SDLRenderer(this);
         // auto widget = sdlRenderer->ToWidget(this);
 
-        auto widget = new SDLWindow(this);
+        auto widget = new SDLWindow(&m_emulator, this);
         ui->centralwidget->layout()->addWidget(widget);
     }
 
