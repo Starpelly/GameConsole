@@ -59,7 +59,8 @@ PCMChannel Audio::Load4BitPCMFile(const char* filename)
 			channel.data[index++] = low;
 	}
 
-	if (index != PCM_CHANNEL_SNAPSHOTS) {
+	if (index != PCM_CHANNEL_SNAPSHOTS)
+	{
 		std::cerr << "Warning: Expected 32 4-bit samples, got " << index << "\n";
 	}
 

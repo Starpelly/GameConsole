@@ -14,14 +14,6 @@ class MusicEditor;
 constexpr auto TRACK_INFO_WIDTH = 93;
 const QColor COLOR_SEPARATOR = QColor(22, 22, 22);
 
-struct MidiNote
-{
-    double timeInSeconds;
-    double endTimeInSeconds;
-
-    int note;
-};
-
 struct AudioState
 {
     double time = 0.0;
@@ -54,14 +46,24 @@ struct ScheduledMidiEvent
     bool isNoteOn;
 };
 
+struct MidiNote
+{
+    double timeInSeconds;
+    double endTimeInSeconds;
+
+    int note;
+};
+
 struct MusicData
 {
     MidiFile midifile;
-    double duration = 0.0;
     size_t eventIndex = 0;
-    double tempo = 0;
 
+    bool playing = false;
+    double duration = 0.0;
+    double tempo = 0;
     double songPosition;
+    double startSongPosition = 0.0;
 
     AudioState state;
 
@@ -86,7 +88,6 @@ public:
     void Stop();
 
     QTimer playbackTimer;
-    bool m_playing = false;
     double startTime = 0.0;
 
     void SwitchTrack(int track);
@@ -108,6 +109,35 @@ private:
 class PianoWidget : public QWidget
 {
     Q_OBJECT
+
+    struct
+    {
+        float snapMult;
+        float snapInterval;
+
+        float zoomX;
+        float zoomY;
+
+        float xpos;
+        float ypos;
+
+        double pixelsPerSecond;
+        double pixelsPerBeat;
+
+        int widgetWidth;
+        int widgetHeight;
+
+        int screenWidth;
+        int screenHeight;
+
+        int numBeats;
+
+        int pianoRowHeight;
+        int pianoRowHalfHeight;
+
+        int blackKeyWidth;
+    } UIState;
+
 public:
     explicit PianoWidget(MusicEditor* editor, QWidget* parent = nullptr);
 
@@ -122,6 +152,7 @@ private:
     QPoint lastMousePos;
 
     bool m_panning = false;
+    bool m_changingTime = false;
 
     float panX = 0.0f;
     float panY = 0.0f;
@@ -139,8 +170,10 @@ private:
     static constexpr auto MAX_KEY_COUNT_M1 = MAX_KEY_COUNT - 1;
 
 private:
+    void updateUIState();
     void clampPan();
     void updateScrollbar();
+    void movePlaybackToCursor(QMouseEvent*);
 
 protected:
     void paintEvent(QPaintEvent*) override;

@@ -4,6 +4,31 @@
 #include "SDK.hpp"
 #include "SDK/MainWindow.hpp"
 
+#ifdef _WIN32
+#include <Windows.h>
+#endif
+
+static void InitConsole()
+{
+#ifdef _WIN32
+    // detach from the current console window
+    // if launched from a console window, that will still run waiting for the new console (below) to
+    // close it is useful to detach from Qt Creator's <Application output> panel
+    FreeConsole();
+
+    // create a separate new console window
+    AllocConsole();
+
+    // attach the new console to this application's process
+    AttachConsole(GetCurrentProcessId());
+
+    // reopen the std I/O streams to redirect I/O to the new console
+    freopen("CON", "w", stdout);
+    freopen("CON", "w", stderr);
+    freopen("CON", "r", stdin);
+#endif
+}
+
 static void ApplyStyle()
 {
     PhantomStyle* style = new PhantomStyle();
@@ -46,6 +71,8 @@ int main(int argc, char *argv[])
     Soulcast::Engine.Init(SDK::GetProjectPath().toStdString().c_str());
 
     QApplication a(argc, argv);
+
+    InitConsole();
 
     ApplyStyle();
     ApplyPalette();
