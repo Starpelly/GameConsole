@@ -680,22 +680,49 @@ void PianoWidget::paintEvent(QPaintEvent* )
         {
             p.setPen(QPen(blackKeyColor));
 
-            bool lastWasBlackKey = false;
-            for (int i = 0; i < MAX_KEY_COUNT; i++)
+            // FL Studio like?
+            if (true)
             {
-                if (IsBlackKey(i))
+                bool lastWasBlackKey = false;
+                for (int i = 0; i < MAX_KEY_COUNT; i++)
                 {
-                    lastWasBlackKey = true;
-                }
-                else
-                {
-                    if (!lastWasBlackKey)
+                    if (IsBlackKey(i))
                     {
-                        const auto lineY = NOTE_TO_Y(i + 1);
-                        p.drawLine(0, lineY, KEYBOARD_WIDTH, lineY);
+                        lastWasBlackKey = true;
                     }
+                    else
+                    {
+                        if (!lastWasBlackKey)
+                        {
+                            const auto lineY = NOTE_TO_Y(i + 1);
+                            p.drawLine(0, lineY, KEYBOARD_WIDTH, lineY);
+                        }
 
-                    lastWasBlackKey = false;
+                        lastWasBlackKey = false;
+                    }
+                }
+            }
+            else
+            {
+                bool lastWasBlackKey = false;
+                for (int i = 0; i < MAX_KEY_COUNT; i++)
+                {
+                    if (IsBlackKey(i))
+                    {
+                        const auto lineY = NOTE_TO_Y(i + 1) - UIState.pianoRowHalfHeight;
+                        p.drawLine(0, lineY, KEYBOARD_WIDTH, lineY);
+                        lastWasBlackKey = true;
+                    }
+                    else
+                    {
+                        if (!lastWasBlackKey)
+                        {
+                            const auto lineY = NOTE_TO_Y(i + 1);
+                            p.drawLine(0, lineY, KEYBOARD_WIDTH, lineY);
+                        }
+
+                        lastWasBlackKey = false;
+                    }
                 }
             }
         }
