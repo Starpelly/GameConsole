@@ -1,5 +1,7 @@
 #pragma once
 
+#include "Engine/Core/Engine.hpp"
+
 namespace Soulcast
 {
 	class SOULCAST_API Emulator

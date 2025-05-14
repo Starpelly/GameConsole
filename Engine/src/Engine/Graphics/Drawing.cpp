@@ -1,4 +1,5 @@
 #include "Engine/Core/Engine.hpp"
+#include "Emulator/Emulator.hpp"
 
 using namespace Soulcast;
 
@@ -13,15 +14,14 @@ ScreenInfo* activeScreen;
 
 ColorMode colorMode;
 
-void Drawing::InitScreenInfo(ScreenInfo* screen, int32 width, int32 height, bool gameScreen)
+void Drawing::InitScreenInfo(ScreenInfo* screen, int32 width, int32 height, uint16* frameBuffer)
 {
     screen->size.x = width;
     screen->size.y = height;
 
-    if (gameScreen)
+    if (frameBuffer != nullptr)
     {
-        // The game screen uses memory pre allocated that the user can read and write to.
-        screen->frameBuffer = reinterpret_cast<uint16*>(&Memory::memory[Memory::FRAMEBUFFER_START]);
+        screen->frameBuffer = frameBuffer;
         screen->ownsFrameBuffer = false;
     }
     else
@@ -492,14 +492,14 @@ void Drawing::DrawBackground(Bitmap* bitmap, int32 x, int32 y)
     }
 }
 
-void Drawing::DrawSprite(Sprite* sprite, int32 x, int32 y)
+void Drawing::DrawSprite(BitmapRegion* sprite, int32 x, int32 y)
 {
     if (sprite->bitmap == nullptr)
         return;
     Drawing::DrawSpriteRegion(sprite, x, y, 0, 0, sprite->bitmap->width, sprite->bitmap->height);
 }
 
-void Drawing::DrawSpriteRegion(Sprite* sprite, int32 x, int32 y, int32 sprX, int32 sprY, int32 sprWidth, int32 sprHeight, SpriteFlip flip)
+void Drawing::DrawSpriteRegion(BitmapRegion* sprite, int32 x, int32 y, int32 sprX, int32 sprY, int32 sprWidth, int32 sprHeight, SpriteFlip flip)
 {
     if (sprite->bitmap == nullptr) return;
 

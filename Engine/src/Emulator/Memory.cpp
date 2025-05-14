@@ -1,4 +1,5 @@
-#include "Engine/Core/Engine.hpp"
+#include "Soulcast.hpp"
+#include "Emulator/Memory.hpp"
 
 using namespace Soulcast;
 

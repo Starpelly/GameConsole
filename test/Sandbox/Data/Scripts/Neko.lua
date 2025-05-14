@@ -2,6 +2,9 @@ SCREEN_XSIZE = 320;
 SCREEN_YSIZE = 240;
 
 FRAMEBUFFER_START = 0x0000
+SPRITES_START = 677888
+
+SPRITE_SIZE = 32
 
 INPUT_UP        = 0
 INPUT_DOWN      = 1
@@ -42,4 +45,14 @@ function neko.drawPixel(x, y, r, g, b)
 
     soul.memory.write(addr, color & 0xFF)         -- low byte
     soul.memory.write(addr + 1, (color >> 8) & 0xFF) -- high byte
+end
+
+function neko.setSpriteX(id, x)
+    local base = SPRITES_START + id * SPRITE_SIZE
+
+    local x_offset = 0
+    local y_offset = 4
+
+    local addr = base + x_offset
+    soul.memory.write(addr, x)
 end

@@ -1,3 +1,4 @@
+#if false
 #pragma once
 
 class Entity
@@ -33,3 +34,4 @@ public:
 	void Update() override;
 	void Render() override;
 };
+#endif

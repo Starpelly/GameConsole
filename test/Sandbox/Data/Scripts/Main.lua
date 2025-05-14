@@ -34,9 +34,10 @@ function soul.init()
 end
 
 function soul.update()
+    -- neko.setSpriteX(0, 32)
     game_update()
 end
 
 function soul.render()
-    game_render()
+   game_render()
 end

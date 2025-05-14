@@ -1,4 +1,6 @@
-#include "Engine/Core/Engine.hpp"
+#include "Emulator/Emulator.hpp"
+#include "Emulator/Scripting.hpp"
+#include "Emulator/Memory.hpp"
 
 using namespace Soulcast;
 
@@ -75,7 +77,9 @@ bool Emulator::Init(SDL_Window* window)
 
     // Game screen buffer texture
     {
-        Drawing::InitScreenInfo(&this->gameScreen, SCREEN_XSIZE, SCREEN_YSIZE, true);
+        auto* gameFrameBuffer = reinterpret_cast<uint16*>(&Memory::memory[Memory::FRAMEBUFFER_START]);
+
+        Drawing::InitScreenInfo(&this->gameScreen, SCREEN_XSIZE, SCREEN_YSIZE, gameFrameBuffer);
 
         this->gameScreen.screenTexture = SDL_CreateTexture(this->renderer, SDL_PIXELFORMAT_RGB565, SDL_TEXTUREACCESS_STREAMING, SCREEN_XSIZE, SCREEN_YSIZE);
         SDL_SetTextureScaleMode(this->gameScreen.screenTexture, SDL_SCALEMODE_NEAREST);

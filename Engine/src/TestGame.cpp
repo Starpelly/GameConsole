@@ -1,3 +1,4 @@
+#if false
 #include "Engine/Core/Engine.hpp"
 #include "TestGame.hpp"
 
@@ -138,3 +139,4 @@ void PlayerEntity::Render()
 {
 
 }
+#endif

@@ -1,4 +1,6 @@
 #include "Engine.hpp"
+#include "Emulator/Scripting.hpp"
+
 #include <iostream>
 #include <vector>
 

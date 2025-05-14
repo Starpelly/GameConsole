@@ -24,8 +24,7 @@ namespace Soulcast
 		bool disposed = false;
 	};
 
-	/// A "sprite" is a rectangular region of the global texture page.
-	struct Sprite
+	struct BitmapRegion
 	{
 		int32 x = 0;
 		int32 y = 0;
@@ -33,5 +32,20 @@ namespace Soulcast
 		int32 h = 0;
 
 		Bitmap* bitmap = nullptr;
+	};
+
+	/// A "sprite" is a 2d graphic drawn onto the screen.
+	struct Sprite
+	{
+		int32 x = 0;
+		int32 y = 0;
+		int32 tileIndex = 0;
+		int32 palette = 0;
+		int32 rotation = 0;
+		int32 scaleX = 0;
+		int32 scaleY = 0;
+		bool hFlip = false;
+		bool vFlip = false;
+		bool visible = false;
 	};
 }

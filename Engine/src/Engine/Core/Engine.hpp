@@ -55,8 +55,6 @@ enum EmulatorStates
 
 #include "Engine/Core/Assert.hpp"
 #include "Engine/Core/Math.hpp"
-#include "Engine/Core/Memory.hpp"
-#include "Engine/Core/Scripting.hpp"
 
 #include "Engine/CPU/CPU.hpp"
 
@@ -72,10 +70,10 @@ enum EmulatorStates
 
 #include "Engine/Scene/Scene.hpp"
 
-#include "Engine/Core/Emulator.hpp"
-
 namespace Soulcast
 {
+	class Emulator;
+
 	class SOULCAST_API SoulcastEngine
 	{
 	public:

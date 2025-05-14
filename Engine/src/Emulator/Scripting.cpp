@@ -1,3 +1,5 @@
+#include "Memory.hpp"
+#include "Scripting.hpp"
 #include "Engine/Core/Engine.hpp"
 
 #include <kaguya/kaguya.hpp>
@@ -98,7 +100,7 @@ char characters[74] =
 };
 
 Bitmap fontBitmap;
-Sprite font;
+BitmapRegion font;
 
 lua_State* L = nullptr;
 bool hadErrors = false;
@@ -250,6 +252,8 @@ void ScriptingEngine::UpdateScripts()
 	}
 }
 
+// Soulcast::Sprite* oam;
+
 void ScriptingEngine::RenderScripts()
 {
 	// Drawing::ClearScreen(9);
@@ -266,6 +270,11 @@ void ScriptingEngine::RenderScripts()
 	{
 		kaguya::State state(L);
 		state[LUA_NAME]["render"]();
+
+		// for (const Memory::OAMEntry& spr : oam)
+		{
+
+		}
 	}
 }
 
@@ -332,9 +341,9 @@ void ScriptingEngine::InitLua()
 		);
 
 		// Sprite
-		state[LUA_NAME]["sprite"].setClass(kaguya::UserdataMetatable<Sprite>()
-			.setConstructors<Sprite()>()
-			.addProperty("bitmap", &Sprite::bitmap)
+		state[LUA_NAME]["sprite"].setClass(kaguya::UserdataMetatable<BitmapRegion>()
+			.setConstructors<BitmapRegion()>()
+			.addProperty("bitmap", &BitmapRegion::bitmap)
 		);
 
 		// Bitmap

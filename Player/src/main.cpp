@@ -1,4 +1,5 @@
 #include "Engine/Core/Engine.hpp"
+#include "Emulator/Emulator.hpp"
 
 int main(int argc, char* argv[])
 {
